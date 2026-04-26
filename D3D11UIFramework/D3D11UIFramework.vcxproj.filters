@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Button">
+      <UniqueIdentifier>{6cdbd2a7-ac53-40c4-9146-1ee92c0fcdcc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Label">
+      <UniqueIdentifier>{610ddd84-0082-49a9-b661-3b0c0e85ead4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Panel">
+      <UniqueIdentifier>{37b6c005-3ce2-4643-8cb0-4cda3c358c88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Splitbar">
+      <UniqueIdentifier>{d364fc65-246e-4024-8d20-36ac7b7b42be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Base">
+      <UniqueIdentifier>{b270a8bf-abbc-4d2a-bc11-65b701ba9586}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Event">
+      <UniqueIdentifier>{d4c95553-c11c-476a-a362-15a8d7af09d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{ad6a7193-9c92-4766-a6a8-22511e4e8894}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Button\UIButton.cpp">
+      <Filter>Button</Filter>
+    </ClCompile>
+    <ClCompile Include="Button\UIContextMenuButton.cpp">
+      <Filter>Button</Filter>
+    </ClCompile>
+    <ClCompile Include="Label\UIIconLabel.cpp">
+      <Filter>Label</Filter>
+    </ClCompile>
+    <ClCompile Include="Label\UILabel.cpp">
+      <Filter>Label</Filter>
+    </ClCompile>
+    <ClCompile Include="Panel\UIContextMenuPanel.cpp">
+      <Filter>Panel</Filter>
+    </ClCompile>
+    <ClCompile Include="Panel\UIPanel.cpp">
+      <Filter>Panel</Filter>
+    </ClCompile>
+    <ClCompile Include="Panel\UIStatusPanel.cpp">
+      <Filter>Panel</Filter>
+    </ClCompile>
+    <ClCompile Include="Splitbar\UISplitBar.cpp">
+      <Filter>Splitbar</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\UIElementBase.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Event\UIEventDispatcher.cpp">
+      <Filter>Event</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\UIIconHelper.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\UISVGResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Button\UIButton.h">
+      <Filter>Button</Filter>
+    </ClInclude>
+    <ClInclude Include="Button\UIContextMenuButton.h">
+      <Filter>Button</Filter>
+    </ClInclude>
+    <ClInclude Include="Label\UIIconLabel.h">
+      <Filter>Label</Filter>
+    </ClInclude>
+    <ClInclude Include="Label\UILabel.h">
+      <Filter>Label</Filter>
+    </ClInclude>
+    <ClInclude Include="Panel\UIContextMenuPanel.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="Panel\UIPanel.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="Panel\UIPanelImpl.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="Panel\UIStatusPanel.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="Splitbar\UISplitBar.h">
+      <Filter>Splitbar</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\UIElementBase.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Event\UIEventDispatcher.h">
+      <Filter>Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Event\UIEventResult.h">
+      <Filter>Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\UIDefaultColor.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\UIIconHelper.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\UISVGResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\ColorRGBA8.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
