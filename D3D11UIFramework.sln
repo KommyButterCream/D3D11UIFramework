@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.37203.1 d17.14
+VisualStudioVersion = 17.14.37203.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D3D11UIFramework", "D3D11UIFramework\D3D11UIFramework.vcxproj", "{6DCACA2E-50C3-4152-8EB9-4F7025A9537E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Modules\Core\Core\Core.vcxproj", "{E3BD70C4-FC37-4703-9A54-152FD00BDEA2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D3D11Engine", "Modules\D3D11Engine\D3D11Engine\D3D11Engine.vcxproj", "{EC25124D-4C9F-40F6-8B16-ECD4DB749CC8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{C8D5274F-AC00-46C7-1F8D-E88E81087A52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +46,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E3BD70C4-FC37-4703-9A54-152FD00BDEA2} = {C8D5274F-AC00-46C7-1F8D-E88E81087A52}
+		{EC25124D-4C9F-40F6-8B16-ECD4DB749CC8} = {C8D5274F-AC00-46C7-1F8D-E88E81087A52}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {62DD4F2C-3E81-4511-AB91-F65538B803A3}
