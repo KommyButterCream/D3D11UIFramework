@@ -2,8 +2,8 @@
 #include "UISplitBar.h"
 
 #include "../Resource/UIDefaultColor.h"
-#include "../../Modules/D3D11EngineInterface/IRenderContext.h"
-#include "../../Modules/Core/ShapeType/Point2f.h"
+#include "../../../Module/D3D11EngineInterface/IRenderContext.h"
+#include "../../../Module/Core/ShapeType/Point2f.h"
 
 UISplitBar::~UISplitBar()
 {

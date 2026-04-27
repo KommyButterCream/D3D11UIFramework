@@ -1,8 +1,8 @@
 ﻿#include "pch.h"
 #include "UILabel.h"
 
-#include "../../Modules/D3D11Engine/Font/FontManager.h"
-#include "../../Modules/D3D11EngineInterface/IRenderContext.h"
+#include "../../../Module/D3D11Engine/Font/FontManager.h"
+#include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 
 #include <string.h>
 

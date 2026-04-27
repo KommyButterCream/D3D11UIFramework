@@ -58,19 +58,11 @@
     <ClInclude Include="Resource\UISVGResource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Modules\Core\Core\Core.vcxproj">
+    <ProjectReference Include="..\..\Core\Core\Core.vcxproj">
       <Project>{e3bd70c4-fc37-4703-9a54-152fd00bdea2}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <SetConfiguration>Configuration=$(Configuration)</SetConfiguration>
-      <SetPlatform>Platform=$(Platform)</SetPlatform>
     </ProjectReference>
-    <ProjectReference Include="..\Modules\D3D11Engine\D3D11Engine\D3D11Engine.vcxproj">
+    <ProjectReference Include="..\..\D3D11Engine\D3D11Engine\D3D11Engine.vcxproj">
       <Project>{ec25124d-4c9f-40f6-8b16-ecd4db749cc8}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <SetConfiguration>Configuration=$(Configuration)</SetConfiguration>
-      <SetPlatform>Platform=$(Platform)</SetPlatform>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -157,11 +149,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;BUILD_D3D11_UI_FRAMEWORK_INTERFACE_DLL;D3D11ENGINEINTERFACE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;BUILD_D3D11_UI_FRAMEWORK_INTERFACE_DLL;D3D11_ENGINE_INTERFACE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Modules\Core;$(ProjectDir)..\Modules\D3D11EngineInterface;$(ProjectDir)..\Modules\D3D11Engine\Font;$(ProjectDir)..\Modules\D3D11Engine\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -176,11 +168,11 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;BUILD_D3D11_UI_FRAMEWORK_INTERFACE_DLL;D3D11ENGINEINTERFACE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;BUILD_D3D11_UI_FRAMEWORK_INTERFACE_DLL;D3D11_ENGINE_INTERFACE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Modules\Core;$(ProjectDir)..\Modules\D3D11EngineInterface;$(ProjectDir)..\Modules\D3D11Engine\Font;$(ProjectDir)..\Modules\D3D11Engine\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>

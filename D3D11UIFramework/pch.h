@@ -33,17 +33,6 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
+#include "../../../Module/Core/DirectX/DxSafeRelease.h" // for SafeRelease
 
-#include "../Modules/Core/DirectX/DxSafeRelease.h" // for SafeRelease
-
-using Core::DirectX::SafeRelease;
-
-template <typename T>
-inline void SafeRelease(T** instance)
-{
-	if (instance && *instance != nullptr)
-	{
-		(*instance)->Release();
-		*instance = nullptr;
-	}
-}
+using namespace Core::DirectX;

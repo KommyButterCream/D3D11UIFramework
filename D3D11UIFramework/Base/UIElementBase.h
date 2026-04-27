@@ -6,8 +6,8 @@
 #define D3D11_UI_FRAMEWORK_INTERFACE_API __declspec(dllimport)
 #endif
 
-#include "../../Modules/Core/ShapeType/Rect2f.h"
-#include "../../Modules/D3D11EngineInterface/IUIRenderLayer.h"
+#include "../../../Module/Core/ShapeType/Rect2f.h"
+#include "../../../Module/D3D11EngineInterface/IUIRenderLayer.h"
 #include "../Resource/ColorRGBA8.h"
 
 namespace RYLYNN = Core::ShapeType;

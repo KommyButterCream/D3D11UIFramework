@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "UIElementBase.h"
 
-#include "../../Modules/Core/ShapeType/Point2f.h"
-#include "../../Modules/D3D11EngineInterface/IRenderContext.h"
+#include "../../../Module/Core/ShapeType/Point2f.h"
+#include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 
 using namespace RYLYNN;
 
