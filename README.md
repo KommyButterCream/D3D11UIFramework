@@ -5,7 +5,7 @@ Windows D3D11-based UI rendering framework DLL for reusable desktop controls and
 Modular C++ UI rendering framework for Windows built on Direct3D 11, Direct2D, and DirectWrite.
 Provides reusable UI controls, layout panels, SVG icon rendering, animated visual states, event dispatching, and render-layer based integration for external engines or desktop applications.
 
-This project is designed as a DLL-based UI component and integrates shared modules from `Core`, `D3D11Engine`, and `D3D11EngineInterface`.
+This project is designed as a DLL-based UI component and integrates shared sibling modules from Core, D3D11Engine, and D3D11EngineInterface.
 
 # Features
 - Direct3D 11 / Direct2D-based UI rendering
@@ -17,12 +17,12 @@ This project is designed as a DLL-based UI component and integrates shared modul
 - SVG icon resource loading and rendering
 - Animated hover / pressed / disabled state transitions
 - Callback-based UI command dispatching
-- Modular shared library integration through submodules
+- Modular integration with shared Core, D3D11Engine, and D3D11EngineInterface projects
 
 # Dependencies
-- [Core](./Modules/Core) as a submodule
-- [D3D11Engine](./Modules/D3D11Engine) as a submodule
-- [D3D11EngineInterface](./Modules/D3D11EngineInterface) as a submodule
+- Core
+- D3D11Engine
+- D3D11EngineInterface
 - Windows Direct3D 11 / Direct2D / DirectWrite
 - C++20
 - MSVC (Visual Studio 2022)
@@ -41,24 +41,29 @@ This project is designed as a DLL-based UI component and integrates shared modul
 - `D3D11UIFramework/Splitbar/` : split bar rendering component
 - `D3D11UIFramework/Resource/` : SVG resources, icon helpers, color utilities, and shared UI resource helpers
 - `D3D11UIFramework/Event/` : UI event dispatcher and event result structures
-- `Modules/Core/` : shared utility and geometry/base infrastructure
-- `Modules/D3D11Engine/` : D3D11 render engine and shared rendering utilities
-- `Modules/D3D11EngineInterface/` : shared rendering interface definitions
 - `D3D11UIFramework.sln` : Visual Studio solution
 
+# Repository Layout
+This project expects D3D11UIFramework, Core, D3D11Engine, and D3D11EngineInterface to be placed under the same parent directory.
+
+Example:
+```text
+Module/
++-- Core/
++-- D3D11Engine/
++-- D3D11EngineInterface/
++-- D3D11UIFramework/
+```
+
+The Visual Studio solution references the shared projects and interface headers through sibling paths:
+- `../Core/Core/Core.vcxproj`
+- `../D3D11Engine/D3D11Engine/D3D11Engine.vcxproj`
+- `../D3D11EngineInterface/`
+
 # Notes
-- This repository uses multiple submodules, including nested submodules inside shared modules.
-- Make sure submodules are initialized recursively before building.
+- The shared Core, D3D11Engine, and D3D11EngineInterface modules are managed as sibling repositories/projects.
+- Open D3D11UIFramework.sln with Visual Studio 2022.
+- Build the x64 configuration to produce the D3D11UIFramework DLL.
 - The main target is a DLL for reusable D3D11-based UI rendering.
 - The framework currently includes buttons, labels, panels, split bars, SVG icon resources, and event dispatch support.
 - The project builds together with shared `Core` and `D3D11Engine` module outputs through the solution.
-
-# Clone
-- Clone with submodules:
-```bash
-git clone --recurse-submodules https://github.com/KommyButterCream/D3D11UIFramework.git
-```
-- If already cloned without submodules:
-```bash
-git submodule update --init --recursive
-```
