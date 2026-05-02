@@ -4,8 +4,6 @@
 #include "../../../Module/Core/ShapeType/Point2f.h"
 #include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 
-using namespace RYLYNN;
-
 class UIElementBaseImpl
 {
 public:

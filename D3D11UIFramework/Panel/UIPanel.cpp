@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <cassert>
 
-using namespace RYLYNN;
-
 UIPanel::UIPanel()
 	: m_impl(nullptr)
 {

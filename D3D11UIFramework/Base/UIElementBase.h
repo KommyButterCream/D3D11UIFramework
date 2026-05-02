@@ -10,7 +10,7 @@
 #include "../../../Module/D3D11EngineInterface/IUIRenderLayer.h"
 #include "../Resource/ColorRGBA8.h"
 
-namespace RYLYNN = Core::ShapeType;
+using namespace Core::ShapeType;
 
 struct UIColorSet
 {
@@ -79,8 +79,8 @@ public:
 	virtual bool RestoreDeviceResources(IRenderContext* context);
 
 public:
-	void SetLayout(const RYLYNN::Rect2f& rect);
-	const RYLYNN::Rect2f& GetLayout() const;
+	void SetLayout(const Core::ShapeType::Rect2f& rect);
+	const Core::ShapeType::Rect2f& GetLayout() const;
 
 	void SetStyle(const UIStyle& style);
 	UIStyle& GetStyle();
@@ -97,8 +97,8 @@ protected:
 
 protected:
 	bool BindRenderContext(IRenderContext* context, bool resetState);
-	RYLYNN::Rect2f& LayoutData();
-	const RYLYNN::Rect2f& LayoutData() const;
+	Core::ShapeType::Rect2f& LayoutData();
+	const Core::ShapeType::Rect2f& LayoutData() const;
 	virtual void OnStateChanged(UIElementState oldState, UIElementState newState);
 
 private:
