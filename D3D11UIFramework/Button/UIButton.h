@@ -23,7 +23,10 @@ enum class UICommand
 	ZoomOut,
 	Zoom1to1,
 	ZoomFit,
-	ImageCenterCrossLine
+	ImageCenterCrossLine,
+
+	// 두 점 사이 거리 측정. 토글이다.
+	MeasureDistance
 };
 
 class D3D11_UI_FRAMEWORK_INTERFACE_API UIButton : public UILabel
