@@ -13,6 +13,21 @@ namespace UIDefaultColor
 	static constexpr ColorRGBA8 buttonPressedColor = { 41, 41, 41, 255 };
 	static constexpr ColorRGBA8 buttonDisabledColor = { 21, 21, 21, 255 };
 
+	// 토글 버튼의 켜짐 상태.
+	//
+	// 명암을 뒤집는다 — 밝은 배경에 어두운 아이콘.
+	// 예전에는 눌린 색(41)을 그대로 올려 썼는데, 꺼짐(32)과 9 계조 차이라
+	// 켜졌는지 아닌지 화면에서 구분되지 않았다.
+	static constexpr ColorRGBA8 buttonActiveColor = { 224, 224, 224, 255 };
+	static constexpr ColorRGBA8 buttonActiveHoverColor = { 255, 255, 255, 255 };
+	static constexpr ColorRGBA8 buttonActivePressedColor = { 198, 198, 198, 255 };
+
+	// 켜짐 상태의 아이콘. 밝은 배경 위에 올라가므로 어둡게 간다.
+	static constexpr ColorRGBA8 iconActiveColor = { 28, 28, 28, 255 };
+	static constexpr ColorRGBA8 iconActiveHoverColor = { 0, 0, 0, 255 };
+	static constexpr ColorRGBA8 iconActivePressedColor = { 60, 60, 60, 255 };
+
+
 	static constexpr ColorRGBA8 contextButtonNormalColor = { 46, 46, 46, 255 };
 	static constexpr ColorRGBA8 contextButtonHoverColor = { 61, 61, 61, 255 }; // 45
 	static constexpr ColorRGBA8 contextButtonPressedColor = { 53, 53, 53, 255 };

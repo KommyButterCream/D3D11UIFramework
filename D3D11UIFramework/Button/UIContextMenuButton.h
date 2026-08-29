@@ -35,12 +35,23 @@ public:
     // UIButton Override
     virtual void OnClick();
 
+    bool Update(float dt) override;
+    void DiscardDeviceResources() override;
+    void OnStateChanged(UIElementState oldState, UIElementState newState) override;
+
+protected:
+    bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
+
 public:
     void SetIconAreaWidth(float width);
     void SetExtraAreaWidth(float width);
     void SetExtraText(const wchar_t* text);
     void SetCheckable(bool enable);
     bool IsChecked() const;
+
+    // 라디오처럼 쓰려면 호스트가 배타성을 관리해야 한다.
+    // OnClick 의 토글과 별개로 상태를 직접 박는 경로다.
+    void SetChecked(bool checked);
 
     // 이 항목이 하위 메뉴를 여는 항목인가.
     //
@@ -53,14 +64,6 @@ public:
 private:
     void UpdateTextLayout() override;
     ContextMenuLayout ComputeLayout() const;
-
-    // extraRect 자리에 꺾쇠(›)를 직접 그린다.
-    //
-    // SVG 아이콘을 쓰지 않는 이유: 아이콘 자산이 저장소 밖에 있어서
-    // 새로 추가하면 배포 의존이 하나 더 늘어난다. 선 두 개면 충분하고,
-    // 글자와 같은 브러시를 쓰므로 hover 색 변화도 저절로 따라간다.
-    void DrawSubMenuArrow(ID2D1DeviceContext* d2dContext,
-                          const D2D1_RECT_F& extraRect) const;
 
 private:
     float m_iconAreaWidth = 28.0f;
@@ -75,9 +78,11 @@ private:
 
     bool m_hasSubMenu = false;
 
-    // 꺾쇠 크기(반높이)와 선 두께. extraRect 오른쪽에 세로 가운데 정렬한다.
-    float m_arrowHalfHeight = 4.0f;
-    float m_arrowThickness = 1.4f;
+    // 하위 메뉴 꺾쇠. 내장 아이콘 경로를 그대로 탄다.
+    //
+    // 예전에는 이 클래스가 DrawLine 두 번으로 따로 그렸다. 같은 도형을
+    // 두 군데서 그리게 되므로 UIIconRenderer 로 합쳤다.
+    UIIcon m_subMenuArrow = {};
 
     IDWriteTextLayout* m_extraTextLayout = nullptr;
 };

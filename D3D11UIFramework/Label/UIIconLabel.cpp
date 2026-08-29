@@ -97,6 +97,11 @@ void UIIconLabel::SetTextAreaWidth(float width)
 	m_textAreaWidth = width;
 }
 
+void UIIconLabel::SetIconShape(UIIconShape shape)
+{
+	m_icon.SetShape(shape);
+}
+
 void UIIconLabel::SetIcon(const wchar_t* path)
 {
 	m_icon.SetPath(path);

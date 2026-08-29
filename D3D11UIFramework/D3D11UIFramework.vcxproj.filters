@@ -34,6 +34,9 @@
     <Filter Include="Resource">
       <UniqueIdentifier>{ad6a7193-9c92-4766-a6a8-22511e4e8894}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IconRender">
+      <UniqueIdentifier>{f7c98149-953f-4071-af64-c8fe7264d4c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -74,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="Resource\UISVGResource.cpp">
       <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="Resource\UIIconRenderer.cpp">
+      <Filter>IconRender</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +130,12 @@
     </ClInclude>
     <ClInclude Include="Resource\ColorRGBA8.h">
       <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\UIIconShape.h">
+      <Filter>IconRender</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource\UIIconRenderer.h">
+      <Filter>IconRender</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

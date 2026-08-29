@@ -32,7 +32,16 @@ enum class UICommand
 	// 현재 붙어 있는 이미지를 파일로 저장한다. 형식마다 항목이 따로 있다.
 	SaveImagePng,
 	SaveImageJpeg,
-	SaveImageBmp
+	SaveImageBmp,
+
+	// 표시용 LUT. 툴바 버튼은 켜고 끄기만 하고,
+	// 어느 테이블인지는 컨텍스트 메뉴가 고른다.
+	ToggleLut,
+	LutGrayscale,
+	LutInverted,
+	LutHot,
+	LutViridis,
+	LutJet
 };
 
 class D3D11_UI_FRAMEWORK_INTERFACE_API UIButton : public UILabel
@@ -55,12 +64,22 @@ public:
 	void OnStateChanged(UIElementState oldState, UIElementState newState) override;
 	void OnLayoutChanged() override;
 
+private:
+	// 현재 상태에 맞게 아이콘 목표값을 건다.
+	void ApplyIconState(UIElementState state);
+
+public:
+
 	virtual void OnClick();
 
 public:
 	void SetCommand(UICommand command);
 	void SetEventDispatcher(UIEventDispatcher* dispatcher);
 
+	// 내장 도형(기본). 파일이 아니라 코드로 그린다.
+	void SetIconShape(UIIconShape shape);
+
+	// SVG 파일(옵션). 설정하면 내장 도형보다 우선한다.
 	void SetIcon(const wchar_t* path);
 	void SetIconScale(float scale);
 	void SetIconStyle(const UIStyle& style);

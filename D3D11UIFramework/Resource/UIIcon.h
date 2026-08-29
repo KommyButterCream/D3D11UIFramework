@@ -8,6 +8,8 @@
 
 #include "../Base/UIElementBase.h"
 #include "../../../Module/D3D11Engine/util/SmoothValue.h"
+#include "UIIconShape.h"
+#include "UIIconRenderer.h"
 
 class IRenderContext;
 class UISVGResource;
@@ -31,9 +33,21 @@ public:
 	UIIcon(const UIIcon&) = delete;
 	UIIcon& operator=(const UIIcon&) = delete;
 
-	// 경로가 바뀌면 이미 로드한 리소스는 버린다.
+	// 내장 도형. 기본 경로다.
+	//
+	// 파일이 아니라 코드로 그리므로 배포에서 빠질 수 없다.
+	void SetShape(UIIconShape shape);
+	UIIconShape GetShape() const;
+
+	// SVG 파일. 호스트가 자기 아이콘을 쓰고 싶을 때의 옵션이다.
+	//
+	// 경로가 설정돼 있으면 내장 도형보다 우선한다.
+	// 내장 도형으로 되돌리려면 SetPath(nullptr) 를 부른다.
 	void SetPath(const wchar_t* path);
 	bool HasPath() const;
+
+	// 그릴 게 있는가(도형이든 SVG 이든).
+	bool HasIcon() const;
 
 	void SetStyle(const UIStyle& style);
 	UIStyle& Style();
@@ -72,6 +86,10 @@ public:
 
 private:
 	UIStyle m_style = {};
+
+	UIIconShape m_shape = UIIconShape::None;
+	UIIconRenderer m_shapeRenderer = {};
+	bool m_shapeReady = false;
 
 	wchar_t* m_path = nullptr;
 	UISVGResource* m_resource = nullptr;

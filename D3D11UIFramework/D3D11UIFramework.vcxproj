@@ -30,6 +30,9 @@
     <ClCompile Include="Base\UIElementBase.cpp" />
     <ClCompile Include="Event\UIEventDispatcher.cpp" />
     <ClCompile Include="Resource\UIIcon.cpp" />
+    <ClCompile Include="Resource\UIIconRenderer.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Resource\UISVGResource.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +57,8 @@
     <ClInclude Include="Event\UIEventResult.h" />
     <ClInclude Include="Resource\UIDefaultColor.h" />
     <ClInclude Include="Resource\UIIcon.h" />
+    <ClInclude Include="Resource\UIIconRenderer.h" />
+    <ClInclude Include="Resource\UIIconShape.h" />
     <ClInclude Include="Resource\UISVGResource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -56,6 +56,19 @@ bool UIElementBase::OnMouseEvent(UIMouseEventType type, float x, float y)
 	if (!IsVisible())
 		return false;
 
+	// ★ 비활성 요소는 상태를 바꾸지도, 활성화되지도 않는다.
+	//
+	// 예전에는 이 검사가 없어서 Disabled 로 만들어도 hover 하이라이트가
+	// 뜨고 클릭하면 커맨드까지 나갔다. 스타일만 흐려질 뿐 실제로는
+	// 멀쩡히 동작하는 버튼이었다.
+	//
+	// 다만 영역 안이면 소비는 한다. 비활성 버튼을 눌렀는데 그 클릭이
+	// 뒤의 이미지로 새면 안 된다.
+	if (m_state == UIElementState::Disabled)
+	{
+		return (type != UIMouseEventType::Leave) && HitTest(x, y);
+	}
+
 	const bool hit = HitTest(x, y);
 
 	switch (type)

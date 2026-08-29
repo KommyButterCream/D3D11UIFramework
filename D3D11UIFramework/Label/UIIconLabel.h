@@ -37,6 +37,10 @@ public:
 	void SetIconAreaWidth(float width);
 	void SetTextAreaWidth(float width);
 
+	// 내장 도형(기본). 파일이 아니라 코드로 그린다.
+	void SetIconShape(UIIconShape shape);
+
+	// SVG 파일(옵션). 설정하면 내장 도형보다 우선한다.
 	void SetIcon(const wchar_t* path);
 	void SetIconScale(float scale);
 	void SetIconStyle(const UIStyle& style);

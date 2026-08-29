@@ -558,6 +558,68 @@ void TestSubMenuHideChain()
 	}
 }
 
+// ────────────────────────────────────────────────────────────────────
+// 비활성 상태
+// ────────────────────────────────────────────────────────────────────
+//
+// 예전에는 OnMouseEvent 가 Disabled 를 확인하지 않아서, 비활성으로 만들어도
+// hover 하이라이트가 뜨고 클릭하면 커맨드까지 나갔다. 스타일만 흐려질 뿐
+// 실제로는 멀쩡히 동작하는 버튼이었다.
+void TestDisabled()
+{
+	printf("\n[비활성]\n");
+
+	{
+		Fixture f;
+		f.a->SetState(UIElementState::Disabled);
+
+		f.panel.OnMouseEvent(UIMouseEventType::Move, 50.0f, 50.0f);
+		Expect(f.a->GetState() == UIElementState::Disabled,
+			"hover 해도 Disabled 유지 (Hovered 로 안 바뀜)");
+	}
+
+	{
+		Fixture f;
+		f.a->SetState(UIElementState::Disabled);
+
+		f.panel.OnMouseEvent(UIMouseEventType::LButtonDown, 50.0f, 50.0f);
+		Expect(f.a->GetState() == UIElementState::Disabled,
+			"눌러도 Pressed 로 안 바뀜");
+
+		f.panel.OnMouseEvent(UIMouseEventType::LButtonUp, 50.0f, 50.0f);
+		Expect(f.log.Count() == 0, "비활성 버튼은 커맨드를 내지 않음");
+	}
+
+	{
+		// 비활성이어도 자기 영역 안이면 소비는 한다.
+		// 그러지 않으면 그 클릭이 뒤의 이미지로 새어 나간다.
+		Fixture f;
+		f.a->SetState(UIElementState::Disabled);
+
+		Expect(f.a->OnMouseEvent(UIMouseEventType::LButtonDown, 50.0f, 50.0f),
+			"영역 안 클릭은 소비 (뒤로 새지 않음)");
+		Expect(!f.a->OnMouseEvent(UIMouseEventType::LButtonDown, 150.0f, 50.0f),
+			"영역 밖은 소비하지 않음");
+	}
+
+	{
+		// 다시 활성으로 되돌리면 정상 동작해야 한다.
+		Fixture f;
+		f.a->SetState(UIElementState::Disabled);
+		f.panel.OnMouseEvent(UIMouseEventType::Move, 50.0f, 50.0f);
+
+		f.a->SetState(UIElementState::Normal);
+		f.panel.OnMouseEvent(UIMouseEventType::Move, 50.0f, 50.0f);
+		Expect(f.a->GetState() == UIElementState::Hovered,
+			"활성으로 되돌리면 다시 hover 됨");
+
+		f.panel.OnMouseEvent(UIMouseEventType::LButtonDown, 50.0f, 50.0f);
+		f.panel.OnMouseEvent(UIMouseEventType::LButtonUp, 50.0f, 50.0f);
+		Expect(f.log.Count() == 1 && f.log.Last() == UICommand::ZoomIn,
+			"활성으로 되돌리면 커맨드도 다시 나감");
+	}
+}
+
 int main()
 {
 	printf("D3D11UIFramework 회귀 하네스 (렌더 컨텍스트 없음)\n");
@@ -579,6 +641,7 @@ int main()
 	TestSubMenuLeafClick();
 	TestSubMenuRootClickKeepsOpen();
 	TestSubMenuHideChain();
+	TestDisabled();
 
 	printf("\n================================================\n");
 	printf("%s  (%d/%d)\n",

@@ -94,7 +94,9 @@ bool UIContextMenuButton::Render()
 	// 없으므로 배타로 둔다.
 	if (m_hasSubMenu)
 	{
-		DrawSubMenuArrow(d2dContext, layout.extraRect);
+		// 꾺쇠도 같은 내장 아이콘 경로를 탄다. 예전엔 여기서
+		// DrawLine 두 번으로 따로 그렸는데, 같은 것을 두 곳에서 그리는 셈이었다.
+		m_subMenuArrow.Draw(d2dContext, layout.extraRect);
 	}
 	else if (m_extraTextLayout)
 	{
@@ -110,33 +112,6 @@ bool UIContextMenuButton::Render()
 	return true;
 }
 
-void UIContextMenuButton::DrawSubMenuArrow(ID2D1DeviceContext* d2dContext,
-	const D2D1_RECT_F& extraRect) const
-{
-	if (!d2dContext || !m_textBrush)
-		return;
-
-	m_textBrush->SetColor(m_smoothTextColor.GetColor());
-
-	// extraRect 오른쪽 끝에 붙이고 세로는 가운데.
-	const float tipX = extraRect.right;
-	const float baseX = tipX - m_arrowHalfHeight;
-	const float centerY = (extraRect.top + extraRect.bottom) * 0.5f;
-
-	// 선 두 개로 '>' 를 만든다. 끝을 둥글게 이으면 꺾이는 지점이 깔끔하다.
-	d2dContext->DrawLine(
-		D2D1::Point2F(baseX, centerY - m_arrowHalfHeight),
-		D2D1::Point2F(tipX, centerY),
-		m_textBrush,
-		m_arrowThickness);
-
-	d2dContext->DrawLine(
-		D2D1::Point2F(tipX, centerY),
-		D2D1::Point2F(baseX, centerY + m_arrowHalfHeight),
-		m_textBrush,
-		m_arrowThickness);
-}
-
 void UIContextMenuButton::OnActivated()
 {
 	// 하위 메뉴를 여는 항목은 커맨드를 내지 않는다.
@@ -147,12 +122,69 @@ void UIContextMenuButton::OnActivated()
 	UIButton::OnActivated();
 }
 
+bool UIContextMenuButton::AcquireDeviceResources(IRenderContext* context, bool reset)
+{
+	if (!UIButton::AcquireDeviceResources(context, reset))
+		return false;
+
+	// 꺾쇠도 디바이스 리소스를 갖는다(스트로크 스타일/브러시).
+	// 부모의 m_icon 과 달리 여기서 직접 챙겨야 한다.
+	if (m_hasSubMenu)
+	{
+		m_subMenuArrow.EnsureLoaded(m_context);
+		m_subMenuArrow.SnapToState(m_state, 1.0f);
+	}
+
+	return true;
+}
+
+void UIContextMenuButton::DiscardDeviceResources()
+{
+	m_subMenuArrow.ReleaseDeviceResources();
+
+	UIButton::DiscardDeviceResources();
+}
+
+void UIContextMenuButton::OnStateChanged(UIElementState oldState, UIElementState newState)
+{
+	UIButton::OnStateChanged(oldState, newState);
+
+	m_subMenuArrow.ApplyState(newState, 1.0f, 1.0f, 1.0f);
+}
+
+bool UIContextMenuButton::Update(float dt)
+{
+	const bool busy = UIButton::Update(dt);
+	const bool arrowBusy = m_hasSubMenu
+		? m_subMenuArrow.UpdateAnimation(dt, 14.0f, 12.0f)
+		: false;
+
+	return busy || arrowBusy;
+}
+
 void UIContextMenuButton::SetHasSubMenu(bool enable)
 {
 	if (m_hasSubMenu == enable)
 		return;
 
 	m_hasSubMenu = enable;
+
+	if (m_hasSubMenu)
+	{
+		m_subMenuArrow.SetShape(UIIconShape::ChevronRight);
+		m_subMenuArrow.SetScale(0.55f);
+
+		// 글자와 같은 색을 따라가게 한다. hover 시 같이 밝아진다.
+		UIStyle arrowStyle = {};
+		arrowStyle.normal.fill = m_textStyle.normal.fill;
+		arrowStyle.hover.fill = m_textStyle.hover.fill;
+		arrowStyle.pressed.fill = m_textStyle.pressed.fill;
+		arrowStyle.disabled.fill = m_textStyle.disabled.fill;
+		m_subMenuArrow.SetStyle(arrowStyle);
+
+		m_subMenuArrow.EnsureLoaded(m_context);
+		m_subMenuArrow.SnapToState(m_state, 1.0f);
+	}
 
 	// 꺾쇠와 단축키 텍스트가 같은 자리를 쓰므로 레이아웃을 다시 잡는다.
 	m_isLayoutDirty = true;
@@ -211,6 +243,11 @@ void UIContextMenuButton::SetCheckable(bool enable)
 bool UIContextMenuButton::IsChecked() const
 {
 	return m_checked;
+}
+
+void UIContextMenuButton::SetChecked(bool checked)
+{
+	m_checked = checked;
 }
 
 void UIContextMenuButton::UpdateTextLayout()
