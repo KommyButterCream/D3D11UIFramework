@@ -27,7 +27,12 @@ enum class UICommand
 	ImageCenterCrossLine,
 
 	// 두 점 사이 거리 측정. 토글이다.
-	MeasureDistance
+	MeasureDistance,
+
+	// 현재 붙어 있는 이미지를 파일로 저장한다. 형식마다 항목이 따로 있다.
+	SaveImagePng,
+	SaveImageJpeg,
+	SaveImageBmp
 };
 
 class D3D11_UI_FRAMEWORK_INTERFACE_API UIButton : public UILabel
