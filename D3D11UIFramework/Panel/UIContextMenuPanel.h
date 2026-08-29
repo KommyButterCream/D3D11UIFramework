@@ -18,20 +18,20 @@ public:
 	virtual ~UIContextMenuPanel();
 
 	// IRenderLayer Override
-	bool Initialize(IRenderContext* context) override;
 	void Shutdown() override;
-	bool Update(float dt) override;
 	bool Prepare() override;
 	bool Render() override;
 	void DiscardDeviceResources() override;
-	bool RestoreDeviceResources(IRenderContext* context) override;
 
 	// UIElementBase Override
-	void OnMouseEvent(UIMouseEventType type, float x, float y) override;
+	bool OnMouseEvent(UIMouseEventType type, float x, float y) override;
 	void OnLayoutChanged() override;
 
 	// UIPanel Override
-	bool HandleMouseEvent(UIMouseEventType type, float x, float y) override;
+
+protected:
+	// UIElementBase Override
+	bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
 
 private:
 	bool CreateShadowResources();

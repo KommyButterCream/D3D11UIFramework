@@ -4,7 +4,7 @@
 #include "../../../Module/D3D11Engine/Font/FontManager.h"
 #include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 #include "../Resource/UISVGResource.h"
-#include "../Resource/UIIconHelper.h"
+#include "../Resource/UIIcon.h"
 #include "../Event/UIEventDispatcher.h"
 
 UIButton::~UIButton()
@@ -12,22 +12,22 @@ UIButton::~UIButton()
 	Shutdown();
 }
 
-bool UIButton::Initialize(IRenderContext* context)
+bool UIButton::AcquireDeviceResources(IRenderContext* context, bool reset)
 {
-	if (!UILabel::Initialize(context))
+	if (!UILabel::AcquireDeviceResources(context, reset))
 		return false;
 
-	m_smoothIconColor.Snap(m_iconStyle.normal.fill);
-	m_smoothIconScale.Snap(1.0f);
+	m_icon.EnsureLoaded(m_context);
 
-	EnsureIconLoaded();
+	// 확보 직후 아이콘 색/배율을 현재 상태에 맞춘다.
+	m_icon.SnapToState(m_state, 1.0f);
 
 	return true;
 }
 
 void UIButton::Shutdown()
 {
-	UIIconHelper::ReleaseIconState(m_iconPath, m_icon, m_iconLoaded);
+	m_icon.Reset();
 
 	m_dispatcher = nullptr;
 
@@ -36,20 +36,9 @@ void UIButton::Shutdown()
 
 void UIButton::DiscardDeviceResources()
 {
-	UIIconHelper::ReleaseIcon(m_icon, m_iconLoaded);
+	m_icon.ReleaseDeviceResources();
 
 	UILabel::DiscardDeviceResources();
-}
-
-bool UIButton::RestoreDeviceResources(IRenderContext* context)
-{
-	if (!UILabel::RestoreDeviceResources(context))
-		return false;
-
-	EnsureIconLoaded();
-	OnStateChanged(m_state, m_state);
-
-	return true;
 }
 
 bool UIButton::Update(float dt)
@@ -58,13 +47,7 @@ bool UIButton::Update(float dt)
 		return false;
 
 	const bool labelAnimating = UILabel::Update(dt);
-	const bool iconAnimating = UIIconHelper::UpdateIconAnimation(
-		m_iconLoaded,
-		dt,
-		14.0f,
-		12.0f,
-		m_smoothIconColor,
-		m_smoothIconScale);
+	const bool iconAnimating = m_icon.UpdateAnimation(dt, 14.0f, 12.0f);
 
 	return
 		labelAnimating ||
@@ -79,32 +62,10 @@ bool UIButton::Render()
 
 	DrawBackground(d2dContext);
 
-	if (m_iconLoaded && m_icon)
+	if (m_icon.IsLoaded())
 	{
 		const auto& layout = LayoutData();
-
-		const float buttonWidth = layout.right - layout.left;
-		const float buttonHeight = layout.bottom - layout.top;
-
-		const float iconWidth = m_icon->GetViewBoxWidth();
-		const float iconHeight = m_icon->GetViewBoxHeight();
-
-		if (iconWidth <= 0.0f || iconHeight <= 0.0f)
-		{
-			return false;
-		}
-
-		const float targetSize = min(buttonWidth, buttonHeight) * m_iconScale;
-		const float scale = min(targetSize / iconWidth, targetSize / iconHeight) * m_smoothIconScale.GetCurrent();
-		if (!UIIconHelper::DrawCenteredIcon(
-			d2dContext,
-			m_icon,
-			{ layout.left, layout.top, layout.right, layout.bottom },
-			m_smoothIconColor.GetColor(),
-			scale))
-		{
-			return false;
-		}
+		m_icon.Draw(d2dContext, { layout.left, layout.top, layout.right, layout.bottom });
 	}
 
 	if (m_hasText && m_textLayout)
@@ -116,61 +77,15 @@ bool UIButton::Render()
 	return true;
 }
 
-void UIButton::OnMouseEvent(UIMouseEventType type, float x, float y)
+// 클릭이 성립한 지점. 상태 머신은 UIElementBase 가 전부 처리하고
+// 버튼은 "그래서 무엇을 하는가" 만 담당한다.
+void UIButton::OnActivated()
 {
-	if (!IsVisible())
-		return;
+	OnClick();
 
-	const bool hit = HitTest(x, y);
-
-	switch (type)
+	if (m_dispatcher)
 	{
-	case UIMouseEventType::Move:
-		if (hit)
-		{
-			if (!m_mouseOver)
-			{
-				m_mouseOver = true;
-				if (m_state != UIElementState::Pressed)
-					SetState(UIElementState::Hovered);
-			}
-		}
-		else
-		{
-			if (m_mouseOver)
-			{
-				m_mouseOver = false;
-				SetState(UIElementState::Normal);
-			}
-		}
-		break;
-
-	case UIMouseEventType::LButtonDown:
-		if (hit)
-			SetState(UIElementState::Pressed);
-		break;
-
-	case UIMouseEventType::LButtonUp:
-		if (m_state == UIElementState::Pressed)
-		{
-			if (hit)
-				OnClick();
-
-			if (hit && m_dispatcher)
-				m_dispatcher->Dispatch(m_command);
-
-			SetState(hit ? UIElementState::Hovered
-				: UIElementState::Normal);
-		}
-		break;
-
-	case UIMouseEventType::Leave:
-		m_mouseOver = false;
-		SetState(UIElementState::Normal);
-		break;
-
-	default:
-		break;
+		m_dispatcher->Dispatch(m_command);
 	}
 }
 
@@ -178,15 +93,8 @@ void UIButton::OnStateChanged(UIElementState oldState, UIElementState newState)
 {
 	UILabel::OnStateChanged(oldState, newState);
 
-	UIIconHelper::ApplyIconStateTargets(
-		newState,
-		m_iconStyle,
-		m_iconLoaded,
-		m_smoothIconColor,
-		m_smoothIconScale,
-		1.0f,
-		1.1f,
-		1.2f);
+	// hover 에 살짝, 누르면 조금 더 커진다.
+	m_icon.ApplyState(newState, 1.0f, 1.1f, 1.2f);
 }
 
 void UIButton::OnLayoutChanged()
@@ -210,30 +118,25 @@ void UIButton::SetEventDispatcher(UIEventDispatcher* dispatcher)
 
 void UIButton::SetIcon(const wchar_t* path)
 {
-	UIIconHelper::ResetIconPath(m_iconPath, path, m_icon, m_iconLoaded);
+	m_icon.SetPath(path);
 }
 
 void UIButton::SetIconScale(float scale)
 {
-	m_iconScale = scale;
+	m_icon.SetScale(scale);
 }
 
 void UIButton::SetIconStyle(const UIStyle& style)
 {
-	m_iconStyle = style;
+	m_icon.SetStyle(style);
 }
 
 UIStyle& UIButton::GetIconStyle()
 {
-	return m_iconStyle;
+	return m_icon.Style();
 }
 
 const UIStyle& UIButton::GetIconStyle() const
 {
-	return m_iconStyle;
-}
-
-void UIButton::EnsureIconLoaded()
-{
-	UIIconHelper::EnsureIconLoaded(m_context, m_iconPath, m_icon, m_iconLoaded);
+	return m_icon.Style();
 }

@@ -69,7 +69,7 @@
     <ClCompile Include="Event\UIEventDispatcher.cpp">
       <Filter>Event</Filter>
     </ClCompile>
-    <ClCompile Include="Resource\UIIconHelper.cpp">
+    <ClCompile Include="Resource\UIIcon.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
     <ClCompile Include="Resource\UISVGResource.cpp">
@@ -98,9 +98,6 @@
     <ClInclude Include="Panel\UIPanel.h">
       <Filter>Panel</Filter>
     </ClInclude>
-    <ClInclude Include="Panel\UIPanelImpl.h">
-      <Filter>Panel</Filter>
-    </ClInclude>
     <ClInclude Include="Panel\UIStatusPanel.h">
       <Filter>Panel</Filter>
     </ClInclude>
@@ -119,7 +116,7 @@
     <ClInclude Include="Resource\UIDefaultColor.h">
       <Filter>Resource</Filter>
     </ClInclude>
-    <ClInclude Include="Resource\UIIconHelper.h">
+    <ClInclude Include="Resource\UIIcon.h">
       <Filter>Resource</Filter>
     </ClInclude>
     <ClInclude Include="Resource\UISVGResource.h">

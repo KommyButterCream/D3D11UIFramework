@@ -4,26 +4,28 @@
 #include "../../../Module/Core/ShapeType/Point2f.h"
 #include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 
-class UIElementBaseImpl
-{
-public:
-	Rect2f layout = {};
-};
-
 UIElementBase::UIElementBase()
-	: m_impl(new UIElementBaseImpl())
 {
 }
 
 UIElementBase::~UIElementBase()
 {
-	delete m_impl;
-	m_impl = nullptr;
 }
 
 bool UIElementBase::Initialize(IRenderContext* context)
 {
-	return BindRenderContext(context, true);
+	return AcquireDeviceResources(context, true);
+}
+
+bool UIElementBase::RestoreDeviceResources(IRenderContext* context)
+{
+	return AcquireDeviceResources(context, false);
+}
+
+bool UIElementBase::AcquireDeviceResources(IRenderContext* context, bool reset)
+{
+	// 잎 요소의 최소 동작. 컨텍스트를 붙이는 것 외에 만들 리소스가 없다.
+	return BindRenderContext(context, reset);
 }
 
 void UIElementBase::Shutdown()
@@ -44,50 +46,76 @@ bool UIElementBase::HitTest(float x, float y) const
 	return LayoutData().Contains({ x, y });
 }
 
-void UIElementBase::OnMouseEvent(UIMouseEventType type, float x, float y)
+// 모든 잎 요소가 공유하는 단 하나의 상태 머신.
+//
+// 예전에는 UIElementBase / UILabel / UIButton 이 이 switch 를 각자 복제하고
+// 있었고 미묘하게 달랐다(base 만 Pressed 중에도 Hovered 로 덮어썼다).
+// 지금은 여기 하나뿐이고, 파생 클래스는 OnActivated() 훅만 재정의한다.
+bool UIElementBase::OnMouseEvent(UIMouseEventType type, float x, float y)
 {
 	if (!IsVisible())
-		return;
+		return false;
 
 	const bool hit = HitTest(x, y);
 
 	switch (type)
 	{
 	case UIMouseEventType::Move:
-		if (hit && !m_mouseOver)
+		if (hit)
 		{
-			m_mouseOver = true;
-			SetState(UIElementState::Hovered);
+			if (!m_mouseOver)
+			{
+				m_mouseOver = true;
+
+				// 누른 채로 벗어났다 돌아온 경우 Pressed 를 유지해야 한다.
+				if (m_state != UIElementState::Pressed)
+				{
+					SetState(UIElementState::Hovered);
+				}
+			}
 		}
-		else if (!hit && m_mouseOver)
+		else if (m_mouseOver)
 		{
 			m_mouseOver = false;
 			SetState(UIElementState::Normal);
 		}
-		break;
+		return hit;
 
 	case UIMouseEventType::LButtonDown:
 		if (hit)
 		{
 			SetState(UIElementState::Pressed);
 		}
-		break;
+		return hit;
 
 	case UIMouseEventType::LButtonUp:
 		if (m_state == UIElementState::Pressed)
 		{
+			// 누른 곳에서 뗐을 때만 활성화다. 밖에서 떼면 취소된다.
+			if (hit)
+			{
+				OnActivated();
+			}
+
 			SetState(hit ? UIElementState::Hovered : UIElementState::Normal);
+			return hit;
 		}
-		break;
+		return false;
 
 	case UIMouseEventType::Leave:
 		m_mouseOver = false;
 		SetState(UIElementState::Normal);
-		break;
+
+		// Leave 에는 소비 개념이 없다. 정리 통지일 뿐이다.
+		return false;
 
 	default:
-		break;
+		return false;
 	}
+}
+
+void UIElementBase::OnActivated()
+{
 }
 
 UIElementState UIElementBase::GetState() const
@@ -138,6 +166,7 @@ const Rect2f& UIElementBase::GetLayout() const
 void UIElementBase::SetStyle(const UIStyle& style)
 {
 	m_style = style;
+	OnStyleChanged();
 }
 
 UIStyle& UIElementBase::GetStyle()
@@ -150,17 +179,11 @@ const UIStyle& UIElementBase::GetStyle() const
 	return m_style;
 }
 
-Rect2f& UIElementBase::LayoutData()
-{
-	return m_impl->layout;
-}
-
-const Rect2f& UIElementBase::LayoutData() const
-{
-	return m_impl->layout;
-}
-
 void UIElementBase::OnStateChanged(UIElementState oldState, UIElementState newState)
+{
+}
+
+void UIElementBase::OnStyleChanged()
 {
 }
 
@@ -170,11 +193,6 @@ void UIElementBase::OnLayoutChanged()
 
 void UIElementBase::DiscardDeviceResources()
 {
-}
-
-bool UIElementBase::RestoreDeviceResources(IRenderContext* context)
-{
-	return BindRenderContext(context, false);
 }
 
 bool UIElementBase::BindRenderContext(IRenderContext* context, bool resetState)

@@ -7,6 +7,7 @@
 #endif
 
 #include "UILabel.h"
+#include "../Resource/UIIcon.h"
 
 class UISVGResource;
 
@@ -24,12 +25,10 @@ public:
 
 public:
 	// IRenderLayer Override
-	bool Initialize(IRenderContext* context) override;
 	void Shutdown() override;
 	bool Update(float dt) override;
 	bool Render() override;
 	void DiscardDeviceResources() override;
-	bool RestoreDeviceResources(IRenderContext* context) override;
 
 	// UIElementBase Override
 	void OnStateChanged(UIElementState oldState, UIElementState newState) override;
@@ -45,27 +44,22 @@ public:
 	UIStyle& GetIconStyle();
 	const UIStyle& GetIconStyle() const;
 
-private:
-	void EnsureIconLoaded();
+protected:
+	// UIElementBase Override
+	bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
 
+private:
 	void UpdateTextLayout() override;
 	UIIconLabelLayout ComputeLayout() const;
 
 private:
 	UIIconLabelLayout m_iconLabellayout = {};
 
-	// animation rendering
-	SmoothColor m_smoothIconColor = {};
-	SmoothValue m_smoothIconScale = {};
-
 	float m_iconAreaWidth = 28.0f;
 	float m_textAreaWidth = 40.0f;
 
-	// icon
-	UIStyle m_iconStyle = {};
-	wchar_t* m_iconPath = nullptr;
-	bool m_iconLoaded = false;
-	UISVGResource* m_icon = nullptr;
-	float m_iconScale = 0.6f;
+	// UIButton 과 같은 UIIcon 을 쓴다. 예전에는 두 클래스가 같은 멤버
+	// 다섯 개를 각자 복제하고 있었다.
+	UIIcon m_icon;
 };
 

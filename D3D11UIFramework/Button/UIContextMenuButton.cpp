@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "UIContextMenuButton.h"
-#include "../Resource/UIIconHelper.h"
+#include "../Resource/UIIcon.h"
 
 #include "../../../Module/D3D11Engine/Font/FontManager.h"
 #include "../Resource/UISVGResource.h"
@@ -12,16 +12,6 @@ UIContextMenuButton::UIContextMenuButton()
 UIContextMenuButton::~UIContextMenuButton()
 {
 	Shutdown();
-}
-
-bool UIContextMenuButton::Initialize(IRenderContext* context)
-{
-	if (!UIButton::Initialize(context))
-		return false;
-
-	SetVisible(true);
-
-	return true;
 }
 
 void UIContextMenuButton::Shutdown()
@@ -37,14 +27,6 @@ void UIContextMenuButton::Shutdown()
 	SafeRelease(m_extraTextLayout);
 
 	UIButton::Shutdown();
-}
-
-bool UIContextMenuButton::Update(float dt)
-{
-	if (!IsVisible())
-		return false;
-
-	return UIButton::Update(dt);
 }
 
 bool UIContextMenuButton::Render()
@@ -63,34 +45,12 @@ bool UIContextMenuButton::Render()
 	// ==================================
 	if (!m_checkable)
 	{
-		if (m_iconLoaded && m_icon)
-		{
-			const float iconWidth = m_icon->GetViewBoxWidth();
-			const float iconHeight = m_icon->GetViewBoxHeight();
-
-			const float areaWidth = layout.iconRect.right - layout.iconRect.left;
-			const float areaHeight = layout.iconRect.bottom - layout.iconRect.top;
-
-			const float scale =
-				min(areaWidth / iconWidth, areaHeight / iconHeight) *
-				m_iconScale *
-				m_smoothIconScale.GetCurrent();
-
-			if (!UIIconHelper::DrawCenteredIcon(
-				d2dContext,
-				m_icon,
-				layout.iconRect,
-				m_smoothIconColor.GetColor(),
-				scale))
-			{
-				return false;
-			}
-		}
+		m_icon.Draw(d2dContext, layout.iconRect);
 	}
 	else
 	{
 		// checkable 일 때
-		if (m_iconLoaded && m_icon && m_checked)
+		if (m_icon.IsLoaded() && m_checked)
 		{
 			if (m_isRoundedRect)
 			{
@@ -112,26 +72,8 @@ bool UIContextMenuButton::Render()
 				}
 			}
 
-			const float iconWidth = m_icon->GetViewBoxWidth();
-			const float iconHeight = m_icon->GetViewBoxHeight();
-
-			const float areaWidth = layout.iconRect.right - layout.iconRect.left;
-			const float areaHeight = layout.iconRect.bottom - layout.iconRect.top;
-
-			const float scale =
-				min(areaWidth / iconWidth, areaHeight / iconHeight) *
-				0.75f *
-				m_smoothIconScale.GetCurrent();
-
-			if (!UIIconHelper::DrawCenteredIcon(
-				d2dContext,
-				m_icon,
-				layout.iconRect,
-				m_smoothIconColor.GetColor(),
-				scale))
-			{
-				return false;
-			}
+			// 체크 표시는 배경 판 위에 얹히므로 본래 아이콘보다 작게 그린다.
+			m_icon.Draw(d2dContext, layout.iconRect, 0.75f);
 		}
 	}
 

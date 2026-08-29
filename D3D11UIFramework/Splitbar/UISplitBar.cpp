@@ -10,9 +10,9 @@ UISplitBar::~UISplitBar()
 	Shutdown();
 }
 
-bool UISplitBar::Initialize(IRenderContext* context)
+bool UISplitBar::AcquireDeviceResources(IRenderContext* context, bool reset)
 {
-	return CreateLineBrush(context, true);
+	return CreateLineBrush(context, reset);
 }
 
 void UISplitBar::Shutdown()
@@ -24,11 +24,6 @@ void UISplitBar::Shutdown()
 void UISplitBar::DiscardDeviceResources()
 {
 	SafeRelease(m_borderBrush);
-}
-
-bool UISplitBar::RestoreDeviceResources(IRenderContext* context)
-{
-	return CreateLineBrush(context, false);
 }
 
 bool UISplitBar::Update(float dt)
@@ -74,9 +69,10 @@ bool UISplitBar::Render()
 	return true;
 }
 
-void UISplitBar::OnMouseEvent(UIMouseEventType type, float x, float y)
+// 구분선은 장식이다. 어떤 이벤트도 소비하지 않는다.
+bool UISplitBar::OnMouseEvent(UIMouseEventType, float, float)
 {
-	return;
+	return false;
 }
 
 bool UISplitBar::HitTest(float x, float y) const

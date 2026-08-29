@@ -8,11 +8,18 @@
 
 #include "../Base/UIElementBase.h"
 #include <memory>
+#include <vector>
 #include <stdint.h>
 
 struct ID2D1SolidColorBrush;
 class IRenderContext;
-class UIPanelImpl;
+
+// C4251: m_children 이 std::vector 라서 나는 경고. 이 벡터는 DLL 안에서만
+// 생성·소멸·순회되고(파생 패널도 전부 이 DLL 소속) 밖으로 노출되는 접근자는
+// AddChild/RemoveChild/ClearChildren 뿐이다. 클라이언트가 벡터 내부를 직접
+// 만지지 않으므로 CRT 힙/이터레이터 디버그 레벨 불일치 문제가 생기지 않는다.
+#pragma warning(push)
+#pragma warning(disable : 4251)
 
 enum class UILayoutType
 {
@@ -28,15 +35,14 @@ public:
 	virtual ~UIPanel();
 
 	// IRenderLayer Override
-	bool Initialize(IRenderContext* context) override;
 	void Shutdown() override;
 	bool Update(float dt) override;
 	bool Render() override;
 	void DiscardDeviceResources() override;
-	bool RestoreDeviceResources(IRenderContext* context) override;
 
 	// UIElementBase Override
-	void OnMouseEvent(UIMouseEventType type, float x, float y) override;
+	// 패널의 유일한 마우스 진입점. 반환값은 소비 여부다.
+	bool OnMouseEvent(UIMouseEventType type, float x, float y) override;
 	void OnLayoutChanged() override;
 
 public:
@@ -44,7 +50,6 @@ public:
 	void RemoveChild(std::shared_ptr<UIElementBase> child);
 	void ClearChildren();
 
-	virtual bool HandleMouseEvent(UIMouseEventType type, float x, float y);
 
 	// UI Layout
 	void Resize(float width, float height);
@@ -60,6 +65,9 @@ public:
 	void SetCornerRadius(float radius);
 
 protected:
+	// UIElementBase Override
+	bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
+
 	bool CreateVisualResources(IRenderContext* context, bool resetState);
 	void ReleaseVisualResources();
 	ID2D1DeviceContext* GetDeviceContext() const;
@@ -72,7 +80,6 @@ protected:
 
 
 private:
-	bool EnsureImpl();
 	bool InitializeChildren(IRenderContext* context);
 	void ShutdownChildren();
 	void DiscardChildDeviceResources();
@@ -82,7 +89,10 @@ private:
 	void UpdateHorizontalLayout();
 
 protected:
-	UIPanelImpl* m_impl = nullptr;
+	// 예전에는 이 vector 하나만 pimpl(UIPanelImpl) 뒤에 있었다. 파생 클래스가
+	// 자식 목록을 순회하려면 결국 impl 헤더를 include 해야 했으므로 숨겨서
+	// 얻는 것이 없었고, 널 체크(EnsureImpl)만 곳곳에 붙었다.
+	std::vector<std::shared_ptr<UIElementBase>> m_children;
 
 	UIElementBase* m_hoveredChild = nullptr;
 
@@ -100,3 +110,5 @@ protected:
 	float m_cornerRadius = 3.0f;
 };
 
+
+#pragma warning(pop)

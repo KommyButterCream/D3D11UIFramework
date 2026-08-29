@@ -23,9 +23,7 @@ public:
 
 public:
     // IRenderLayer Override
-    bool Initialize(IRenderContext* context) override;
     void Shutdown() override;
-    bool Update(float dt) override;
     bool Render() override;
 
     // UIButton Override

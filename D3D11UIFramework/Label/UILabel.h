@@ -23,18 +23,17 @@ public:
 
 public:
 	// IRenderLayer Override
-	bool Initialize(IRenderContext* context) override;
 	void Shutdown() override;
 	bool Update(float dt) override;
 	bool Render() override;
 	void DiscardDeviceResources() override;
-	bool RestoreDeviceResources(IRenderContext* context) override;
 
-	// IUIRenderLayer Override
-	void OnMouseEvent(UIMouseEventType type, float x, float y) override;
+	// OnMouseEvent 는 재정의하지 않는다. UIElementBase 의 상태 머신이
+	// 라벨에 필요한 전부다.
 
 	// UIElementBase Override
 	void OnStateChanged(UIElementState oldState, UIElementState newState) override;
+	void OnStyleChanged() override;
 	void OnLayoutChanged() override;
 
 public:
@@ -49,6 +48,9 @@ public:
 	void SetTextPadding(float left, float top, float right, float bottom);
 
 protected:
+	// UIElementBase Override
+	bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
+
 	virtual void UpdateTextLayout();
 
 	bool CreateVisualResources(IRenderContext* context, bool resetState);

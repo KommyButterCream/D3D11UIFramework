@@ -22,15 +22,13 @@ public:
 
 public:
 	// IRenderLayer Override
-	bool Initialize(IRenderContext* context) override;
 	void Shutdown() override;
 	bool Update(float dt) override;
 	bool Render() override;
 	void DiscardDeviceResources() override;
-	bool RestoreDeviceResources(IRenderContext* context) override;
 
 	// IUIRenderLayer Override
-	void OnMouseEvent(UIMouseEventType type, float x, float y) override;
+	bool OnMouseEvent(UIMouseEventType type, float x, float y) override;
 	bool HitTest(float x, float y) const override;
 
 	// UIElementBase Override
@@ -40,6 +38,10 @@ public:
 	void SetLineColor(const D2D1_COLOR_F& color);
 	void SetSplitbarType(const SplitBarType& splitbarType);
 	void SetLineThickness(float lineThickness);
+
+protected:
+	// UIElementBase Override
+	bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
 
 private:
 	bool CreateLineBrush(IRenderContext* context, bool resetState);

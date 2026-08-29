@@ -8,6 +8,7 @@
 
 #include "../Label/UILabel.h"
 #include "../../../Module/D3D11Engine/util/SmoothValue.h"
+#include "../Resource/UIIcon.h"
 
 
 struct ID2D1SolidColorBrush;
@@ -37,17 +38,15 @@ public:
 
 public:
 	// IRenderLayer Override
-	bool Initialize(IRenderContext* context) override;
 	void Shutdown() override;
 	bool Update(float dt) override;
 	bool Render() override;
 	void DiscardDeviceResources() override;
-	bool RestoreDeviceResources(IRenderContext* context) override;
-
-	// IUIRenderLayer Override
-	void OnMouseEvent(UIMouseEventType type, float x, float y) override;
 
 	// UIElementBase Override
+	//
+	// 상태 머신은 재정의하지 않는다. 클릭이 성립했을 때 할 일만 여기 둔다.
+	void OnActivated() override;
 	void OnStateChanged(UIElementState oldState, UIElementState newState) override;
 	void OnLayoutChanged() override;
 
@@ -65,22 +64,16 @@ public:
 	const UIStyle& GetIconStyle() const;
 
 protected:
-	void EnsureIconLoaded();
+	// UIElementBase Override
+	bool AcquireDeviceResources(IRenderContext* context, bool reset) override;
 
-protected:
 	// mouse event
 	UICommand m_command = UICommand::None;
 	UIEventDispatcher* m_dispatcher = nullptr;
 
-	// animation rendering
-	SmoothColor m_smoothIconColor = {};
-	SmoothValue m_smoothIconScale = {};
-
-	// icon
-	UIStyle m_iconStyle = {};
-	wchar_t* m_iconPath = nullptr;
-	bool m_iconLoaded = false;
-	UISVGResource* m_icon = nullptr;
-	float m_iconScale = 0.6f;
+	// 아이콘은 UIIcon 이 통째로 들고 있다. 예전에는 경로/리소스/로드 여부/
+	// 배율/애니메이션 값이 멤버로 흩어져 있었고 UIIconLabel 이 같은 다섯 개를
+	// 그대로 복제하고 있었다.
+	UIIcon m_icon;
 };
 

@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "UIContextMenuPanel.h"
-#include "UIPanelImpl.h"
+
 
 #include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 
@@ -14,32 +14,30 @@ UIContextMenuPanel::~UIContextMenuPanel()
 	Shutdown();
 }
 
-bool UIContextMenuPanel::Initialize(IRenderContext* context)
+bool UIContextMenuPanel::AcquireDeviceResources(IRenderContext* context, bool reset)
 {
-	if (!UIPanel::Initialize(context))
+	if (!UIPanel::AcquireDeviceResources(context, reset))
 		return false;
 
-	SetVisible(false);
-
-	return CreateShadowResources();
-}
-
-void UIContextMenuPanel::DiscardDeviceResources()
-{
-	ReleaseShadowResources();
-	UIPanel::DiscardDeviceResources();
-}
-
-bool UIContextMenuPanel::RestoreDeviceResources(IRenderContext* context)
-{
-	if (!UIPanel::RestoreDeviceResources(context))
-		return false;
+	// 컨텍스트 메뉴는 닫힌 채로 시작한다. 디바이스 로스트 복구 때는
+	// 열려 있었는지 여부를 그대로 유지해야 하므로 건드리지 않는다.
+	if (reset)
+	{
+		SetVisible(false);
+	}
 
 	if (!CreateShadowResources())
 		return false;
 
 	m_shadowDirty = true;
 	return true;
+}
+
+
+void UIContextMenuPanel::DiscardDeviceResources()
+{
+	ReleaseShadowResources();
+	UIPanel::DiscardDeviceResources();
 }
 
 bool UIContextMenuPanel::CreateShadowResources()
@@ -80,14 +78,6 @@ void UIContextMenuPanel::ReleaseShadowResources()
 	SafeRelease(m_shadowMask);
 }
 
-bool UIContextMenuPanel::Update(float dt)
-{
-	if (!IsVisible())
-		return false;
-
-	return UIPanel::Update(dt);
-}
-
 bool UIContextMenuPanel::Prepare()
 {
 	if (m_shadowDirty)
@@ -113,16 +103,43 @@ bool UIContextMenuPanel::Render()
 	return UIPanel::Render();
 }
 
-void UIContextMenuPanel::OnMouseEvent(UIMouseEventType type, float x, float y)
+// 컨텍스트 메뉴만의 여닫기 규칙을 먼저 처리하고 나머지는 패널에 맡긴다.
+//
+// 예전에는 이 로직이 OnMouseEvent 와 HandleMouseEvent 로 쪼개져 있었다.
+// 전자는 좌클릭/더블클릭 바깥 닫기를, 후자는 우클릭 여닫기를 담당해서
+// "메뉴가 언제 닫히는가" 를 알려면 두 곳을 다 봐야 했다.
+bool UIContextMenuPanel::OnMouseEvent(UIMouseEventType type, float x, float y)
 {
-	if (type == UIMouseEventType::LButtonDown ||
-		type == UIMouseEventType::LButtonDoubleDown)
+	switch (type)
 	{
+	case UIMouseEventType::RButtonDown:
+		Hide();
+		return true;
+
+	case UIMouseEventType::RButtonUp:
+		Show(x, y);
+		return true;
+
+	case UIMouseEventType::LButtonDown:
+	case UIMouseEventType::LButtonDoubleDown:
+		// 메뉴 밖을 누르면 닫는다. 다만 그 클릭 자체는 소비하지 않는다 —
+		// 호스트가 이미지 클릭으로 이어서 처리해야 한다.
 		if (!HitTest(x, y))
-			Hide();
+		{
+			if (IsVisible())
+			{
+				Hide();
+			}
+
+			return false;
+		}
+		break;
+
+	default:
+		break;
 	}
 
-	UIPanel::OnMouseEvent(type, x, y);
+	return UIPanel::OnMouseEvent(type, x, y);
 }
 
 void UIContextMenuPanel::OnLayoutChanged()
@@ -132,36 +149,11 @@ void UIContextMenuPanel::OnLayoutChanged()
 	UIPanel::OnLayoutChanged();
 }
 
-bool UIContextMenuPanel::HandleMouseEvent(UIMouseEventType type, float x, float y)
-{
-	if (type == UIMouseEventType::RButtonDown)
-	{
-		Hide();
-
-		return true;
-	}
-	else if (type == UIMouseEventType::RButtonUp)
-	{
-		Show(x, y);
-
-		return true;
-	}
-	else if (type == UIMouseEventType::LButtonDown)
-	{
-		if (!HitTest(x, y) && IsVisible())
-			Hide();
-
-		if (!HitTest(x, y))
-			return false;
-	}
-
-	return UIPanel::HandleMouseEvent(type, x, y);
-}
 
 float UIContextMenuPanel::CalculateContentHeight()
 {
 	float total = GetPadding() * 2;
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (child->IsVisible())
 		{
@@ -169,7 +161,7 @@ float UIContextMenuPanel::CalculateContentHeight()
 		}
 	}
 
-	const size_t childCount = m_impl->m_children.size();
+	const size_t childCount = m_children.size();
 	if (childCount > 1)
 	{
 		total += static_cast<float>(childCount - 1) * GetSpacing();

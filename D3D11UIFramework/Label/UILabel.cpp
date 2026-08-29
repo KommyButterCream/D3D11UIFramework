@@ -11,9 +11,19 @@ UILabel::~UILabel()
 	Shutdown();
 }
 
-bool UILabel::Initialize(IRenderContext* context)
+bool UILabel::AcquireDeviceResources(IRenderContext* context, bool reset)
 {
-	return CreateVisualResources(context, true);
+	if (!CreateVisualResources(context, reset))
+		return false;
+
+	// 텍스트 포맷/레이아웃을 무효화해 다음 EnsureTextUpdate 에서 다시 만들게 한다.
+	// 최초 초기화 시점에는 아직 텍스트가 없어 곧바로 빠져나간다.
+	m_textFormat = nullptr;
+	m_isFormatDirty = true;
+	m_isLayoutDirty = true;
+	EnsureTextUpdate();
+
+	return true;
 }
 
 void UILabel::Shutdown()
@@ -69,59 +79,12 @@ void UILabel::DiscardDeviceResources()
 	ReleaseVisualResources();
 }
 
-bool UILabel::RestoreDeviceResources(IRenderContext* context)
-{
-	if (!CreateVisualResources(context, false))
-		return false;
-
-	m_textFormat = nullptr;
-	m_isFormatDirty = true;
-	m_isLayoutDirty = true;
-	EnsureTextUpdate();
-
-	return true;
-}
-
-void UILabel::OnMouseEvent(UIMouseEventType type, float x, float y)
-{
-	if (!IsVisible())
-		return;
-
-	const bool hit = HitTest(x, y);
-
-	switch (type)
-	{
-	case UIMouseEventType::Move:
-		if (hit)
-		{
-			if (!m_mouseOver)
-			{
-				m_mouseOver = true;
-				if (m_state != UIElementState::Pressed)
-					SetState(UIElementState::Hovered);
-			}
-		}
-		else
-		{
-			if (m_mouseOver)
-			{
-				m_mouseOver = false;
-				SetState(UIElementState::Normal);
-			}
-		}
-		break;
-
-	case UIMouseEventType::Leave:
-		m_mouseOver = false;
-		SetState(UIElementState::Normal);
-		break;
-
-	default:
-		break;
-	}
-}
-
 void UILabel::OnStateChanged(UIElementState oldState, UIElementState newState)
+{
+	UpdateVisualTargets();
+}
+
+void UILabel::OnStyleChanged()
 {
 	UpdateVisualTargets();
 }

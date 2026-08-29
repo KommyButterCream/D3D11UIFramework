@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "UIPanel.h"
-#include "UIPanelImpl.h"
+
 
 #include "../../../Module/D3D11EngineInterface/IRenderContext.h"
 
@@ -9,35 +9,36 @@
 #include <cassert>
 
 UIPanel::UIPanel()
-	: m_impl(nullptr)
 {
-	EnsureImpl();
 }
 
 UIPanel::~UIPanel()
 {
 	Shutdown();
-
-	if (m_impl)
-	{
-		m_impl->m_children.clear();
-		delete m_impl;
-		m_impl = nullptr;
-	}
+	m_children.clear();
 }
 
-bool UIPanel::Initialize(IRenderContext* context)
+bool UIPanel::AcquireDeviceResources(IRenderContext* context, bool reset)
 {
-	if (!EnsureImpl())
+	if (!CreateVisualResources(context, reset))
 		return false;
 
-	if (!CreateVisualResources(context, true))
+	// 자식도 같은 경로를 탄다. Initialize / RestoreDeviceResources 는 둘 다
+	// UIElementBase 에서 AcquireDeviceResources 로 모이므로 아래 두 갈래는
+	// 결국 자식의 같은 함수를 reset 값만 바꿔 부르는 것과 같다.
+	if (!(reset ? InitializeChildren(context) : RestoreChildDeviceResources(context)))
 		return false;
 
-	if (!InitializeChildren(context))
-		return false;
-
-	UpdateChildLayout();
+	// 최초에는 자식 위치가 아직 없으므로 배치부터 계산한다(그 안에서 그리기
+	// 캐시도 갱신된다). 복구 때는 배치가 그대로이므로 캐시만 다시 만든다.
+	if (reset)
+	{
+		UpdateChildLayout();
+	}
+	else
+	{
+		UpdateDrawRectCache();
+	}
 
 	return true;
 }
@@ -58,21 +59,6 @@ void UIPanel::DiscardDeviceResources()
 	ReleaseVisualResources();
 }
 
-bool UIPanel::RestoreDeviceResources(IRenderContext* context)
-{
-	if (!EnsureImpl())
-		return false;
-
-	if (!CreateVisualResources(context, false))
-		return false;
-
-	if (!RestoreChildDeviceResources(context))
-		return false;
-
-	UpdateDrawRectCache();
-	return true;
-}
-
 bool UIPanel::Update(float dt)
 {
 	bool busy = false;
@@ -80,7 +66,7 @@ bool UIPanel::Update(float dt)
 	if (!IsVisible())
 		return busy;
 
-	for (const auto& child : m_impl->m_children)
+	for (const auto& child : m_children)
 	{
 		if (child->Update(dt))
 		{
@@ -99,7 +85,7 @@ bool UIPanel::Render()
 
 	DrawBackground(d2dContext);
 
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (child && child->IsVisible())
 		{
@@ -110,13 +96,65 @@ bool UIPanel::Render()
 	return true;
 }
 
-void UIPanel::OnMouseEvent(UIMouseEventType type, float x, float y)
+// 패널의 단 하나뿐인 마우스 진입점.
+//
+// 예전에는 OnMouseEvent(인터페이스, void) 와 HandleMouseEvent(자체, bool) 가
+// 따로 있었다. 실제로 쓰인 건 후자뿐이고 전자는 hover 추적을 하지 않아서,
+// 잘못 부르면 하이라이트가 고착됐다. 인터페이스가 bool 을 돌려주게 되면서
+// 둘을 합칠 수 있었다.
+bool UIPanel::OnMouseEvent(UIMouseEventType type, float x, float y)
 {
 	if (!IsVisible())
-		return;
+	{
+		return false;
+	}
 
-	if (UIElementBase* hit = HitTestRecursive(x, y))
-		hit->OnMouseEvent(type, x, y);
+	// Leave 는 좌표와 무관하게 자식 정리 통지다. 히트 테스트보다 먼저 본다.
+	if (type == UIMouseEventType::Leave)
+	{
+		NotifyChildrenLeave(x, y);
+		return false;
+	}
+
+	// 패널 밖이면 안에 있던 hover 를 풀고 넘긴다.
+	if (!HitTest(x, y))
+	{
+		NotifyChildrenLeave(x, y);
+		return false;
+	}
+
+	// 툴바 위 더블클릭이 이미지 줌으로 새지 않게 흡수한다.
+	if (type == UIMouseEventType::LButtonDoubleDown)
+	{
+		return true;
+	}
+
+	UIElementBase* hit = HitTestRecursive(x, y);
+
+	if (!hit)
+	{
+		// 패널 안이지만 자식이 없는 자리. 뒤로 흘리지 않고 패널이 먹는다.
+		NotifyChildrenLeave(x, y);
+		return true;
+	}
+
+	if (type == UIMouseEventType::Move)
+	{
+		// 이전 hover 자식을 먼저 풀어야 하이라이트가 겹치지 않는다.
+		if (m_hoveredChild && m_hoveredChild != hit)
+		{
+			m_hoveredChild->OnMouseEvent(UIMouseEventType::Leave, x, y);
+		}
+
+		m_hoveredChild = hit;
+	}
+
+	hit->OnMouseEvent(type, x, y);
+
+	// 자식이 처리했든 아니든 패널 영역 안에서 일어난 일이다.
+	// 여기서 자식의 반환값을 그대로 넘기면, 버튼 위 LButtonUp 인데
+	// Pressed 가 아니었던 경우 등이 호스트로 새어 나간다.
+	return true;
 }
 
 void UIPanel::OnLayoutChanged()
@@ -129,10 +167,7 @@ void UIPanel::AddChild(std::shared_ptr<UIElementBase> child)
 	if (!child)
 		return;
 
-	if (!EnsureImpl())
-		return;
-
-	m_impl->m_children.push_back(child);
+	m_children.push_back(child);
 
 	if (m_context)
 	{
@@ -144,7 +179,7 @@ void UIPanel::AddChild(std::shared_ptr<UIElementBase> child)
 
 void UIPanel::RemoveChild(std::shared_ptr<UIElementBase> child)
 {
-	auto& children = m_impl->m_children;
+	auto& children = m_children;
 
 	if (m_hoveredChild == child.get())
 		m_hoveredChild = nullptr;
@@ -156,87 +191,12 @@ void UIPanel::RemoveChild(std::shared_ptr<UIElementBase> child)
 
 void UIPanel::ClearChildren()
 {
-	m_impl->m_children.clear();
+	m_children.clear();
 	m_hoveredChild = nullptr;
 
 	UpdateChildLayout();
 }
 
-bool UIPanel::HandleMouseEvent(UIMouseEventType type, float x, float y)
-{
-	if (!IsVisible())
-		return false;
-
-	if (!HitTest(x, y))
-	{
-		NotifyChildrenLeave(x, y);
-		return false;
-	}
-
-	if (type == UIMouseEventType::LButtonDoubleDown)
-	{
-		// Toolbar 위에서 더블클릭 시 이미지 Zoom In/Out 관련
-		// 어떠한 행위도 수행 하지 않도록 true 반환
-		return true;
-	}
-
-	UIElementBase* hit = HitTestRecursive(x, y);
-
-	if (!hit)
-	{
-		NotifyChildrenLeave(x, y);
-		return true;
-	}
-
-
-	switch (type)
-	{
-	case UIMouseEventType::Move:
-	{
-		// 1️⃣ 이전 hover → Leave
-		if (m_hoveredChild && m_hoveredChild != hit)
-		{
-			m_hoveredChild->OnMouseEvent(UIMouseEventType::Leave, x, y);
-		}
-
-		// 2️⃣ 현재 hit → Move
-		if (hit)
-		{
-			hit->OnMouseEvent(UIMouseEventType::Move, x, y);
-		}
-
-		m_hoveredChild = hit;
-		return hit != nullptr;
-	}
-
-	case UIMouseEventType::LButtonDown:
-	case UIMouseEventType::LButtonUp:
-	{
-		if (hit)
-		{
-			hit->OnMouseEvent(type, x, y);
-			return true;
-		}
-		return false;
-	}
-
-	case UIMouseEventType::Leave:
-	{
-		if (m_hoveredChild)
-		{
-			m_hoveredChild->OnMouseEvent(UIMouseEventType::Leave, x, y);
-			m_hoveredChild = nullptr;
-			return true;
-		}
-		return false;
-	}
-
-	default:
-		break;
-	}
-
-	return false;
-}
 
 void UIPanel::Resize(float width, float height)
 {
@@ -353,10 +313,7 @@ void UIPanel::UpdateChildLayout()
 
 int32_t UIPanel::GetChildItemCount() const
 {
-	if (!m_impl)
-		return 0;
-
-	return static_cast<int32_t>(m_impl->m_children.size());
+	return static_cast<int32_t>(m_children.size());
 }
 
 void UIPanel::UpdateDrawRectCache()
@@ -387,8 +344,8 @@ void UIPanel::UpdateDrawRectCache()
 
 UIElementBase* UIPanel::HitTestRecursive(float x, float y)
 {
-	for (auto it = m_impl->m_children.rbegin();
-		it != m_impl->m_children.rend();
+	for (auto it = m_children.rbegin();
+		it != m_children.rend();
 		++it)
 	{
 		auto& child = *it;
@@ -425,7 +382,7 @@ void UIPanel::UpdateVerticalLayout()
 
 	float contentWidth = layout.Width() - m_padding * 2;
 
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (!child || !child->IsVisible())
 			continue;
@@ -463,7 +420,7 @@ void UIPanel::UpdateHorizontalLayout()
 
 	float contentHeight = layout.Height() - m_padding * 2;
 
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (!child || !child->IsVisible())
 			continue;
@@ -502,28 +459,9 @@ bool UIPanel::CreateVisualResources(IRenderContext* context, bool resetState)
 	return true;
 }
 
-bool UIPanel::EnsureImpl()
-{
-	if (m_impl)
-		return true;
-
-	m_impl = new UIPanelImpl();
-
-	if (!m_impl)
-	{
-		assert("UIPanelImpl Create Failed!");
-		return false;
-	}
-
-	return true;
-}
-
 bool UIPanel::InitializeChildren(IRenderContext* context)
 {
-	if (!m_impl)
-		return false;
-
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (child && !child->Initialize(context))
 		{
@@ -536,10 +474,7 @@ bool UIPanel::InitializeChildren(IRenderContext* context)
 
 void UIPanel::ShutdownChildren()
 {
-	if (!m_impl)
-		return;
-
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (child)
 		{
@@ -550,10 +485,7 @@ void UIPanel::ShutdownChildren()
 
 void UIPanel::DiscardChildDeviceResources()
 {
-	if (!m_impl)
-		return;
-
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (child)
 		{
@@ -564,10 +496,7 @@ void UIPanel::DiscardChildDeviceResources()
 
 bool UIPanel::RestoreChildDeviceResources(IRenderContext* context)
 {
-	if (!m_impl)
-		return false;
-
-	for (auto& child : m_impl->m_children)
+	for (auto& child : m_children)
 	{
 		if (child && !child->RestoreDeviceResources(context))
 		{
@@ -620,9 +549,16 @@ void UIPanel::DrawBackground(ID2D1DeviceContext* d2dContext)
 
 void UIPanel::NotifyChildrenLeave(float x, float y)
 {
-	for (auto& child : m_impl->m_children)
+	// ★ GetState() != Normal 로 거르면 안 된다.
+	//
+	// 패널은 자기 상태를 갖지 않아 항상 Normal 이다. 그래서 중첩 패널을
+	// 건너뛰게 되고, 그 안의 손자는 Leave 를 영영 못 받아 hover 가 고착됐다.
+	// 지금은 무조건 내려보내고, 자식이 패널이면 스스로 재귀한다
+	// (UIPanel::OnMouseEvent 의 Leave 분기). SetState 는 값이 같으면
+	// 아무것도 하지 않으므로 이미 Normal 인 자식에게는 공짜다.
+	for (auto& child : m_children)
 	{
-		if (child && child->GetState() != UIElementState::Normal)
+		if (child)
 		{
 			child->OnMouseEvent(UIMouseEventType::Leave, x, y);
 		}

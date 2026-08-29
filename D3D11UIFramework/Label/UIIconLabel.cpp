@@ -3,7 +3,7 @@
 
 #include "../../../Module/D3D11Engine/Font/FontManager.h"
 #include "../Resource/UISVGResource.h"
-#include "../Resource/UIIconHelper.h"
+#include "../Resource/UIIcon.h"
 
 UIIconLabel::UIIconLabel()
 {
@@ -14,42 +14,31 @@ UIIconLabel::~UIIconLabel()
 	Shutdown();
 }
 
-bool UIIconLabel::Initialize(IRenderContext* context)
+bool UIIconLabel::AcquireDeviceResources(IRenderContext* context, bool reset)
 {
-	if (!UILabel::Initialize(context))
+	if (!UILabel::AcquireDeviceResources(context, reset))
 		return false;
 
-	m_smoothIconColor.Snap(m_iconStyle.normal.fill);
-	m_smoothIconScale.Snap(1.0f);
+	m_icon.EnsureLoaded(m_context);
 
-	EnsureIconLoaded();
+	// 확보 직후 아이콘 색/배율을 현재 상태에 맞춘다.
+	m_icon.SnapToState(m_state, 1.0f);
 
 	return true;
 }
 
 void UIIconLabel::Shutdown()
 {
-	UIIconHelper::ReleaseIconState(m_iconPath, m_icon, m_iconLoaded);
+	m_icon.Reset();
 
 	UILabel::Shutdown();
 }
 
 void UIIconLabel::DiscardDeviceResources()
 {
-	UIIconHelper::ReleaseIcon(m_icon, m_iconLoaded);
+	m_icon.ReleaseDeviceResources();
 
 	UILabel::DiscardDeviceResources();
-}
-
-bool UIIconLabel::RestoreDeviceResources(IRenderContext* context)
-{
-	if (!UILabel::RestoreDeviceResources(context))
-		return false;
-
-	EnsureIconLoaded();
-	OnStateChanged(m_state, m_state);
-
-	return true;
 }
 
 bool UIIconLabel::Update(float dt)
@@ -58,13 +47,7 @@ bool UIIconLabel::Update(float dt)
 		return false;
 
 	constexpr float animationSpeed = 14.0f;
-	const bool iconAnimating = UIIconHelper::UpdateIconAnimation(
-		m_iconLoaded,
-		dt,
-		animationSpeed,
-		animationSpeed,
-		m_smoothIconColor,
-		m_smoothIconScale);
+	const bool iconAnimating = m_icon.UpdateAnimation(dt, animationSpeed, animationSpeed);
 
 	const bool animating =
 		UILabel::Update(dt) ||
@@ -84,33 +67,7 @@ bool UIIconLabel::Render()
 	// ==================================
 	// ICON
 	// ==================================
-	if (m_iconLoaded && m_icon)
-	{
-		const float iconWidth = m_icon->GetViewBoxWidth();
-		const float iconHeight = m_icon->GetViewBoxHeight();
-		if (iconWidth <= 0.0f || iconHeight <= 0.0f)
-		{
-			return false;
-		}
-
-		const float areaWidth = m_iconLabellayout.iconRect.right - m_iconLabellayout.iconRect.left;
-		const float areaHeight = m_iconLabellayout.iconRect.bottom - m_iconLabellayout.iconRect.top;
-
-		const float scale =
-			min(areaWidth / iconWidth, areaHeight / iconHeight) *
-			m_iconScale *
-			m_smoothIconScale.GetCurrent();
-
-		if (!UIIconHelper::DrawCenteredIcon(
-			d2dContext,
-			m_icon,
-			m_iconLabellayout.iconRect,
-			m_smoothIconColor.GetColor(),
-			scale))
-		{
-			return false;
-		}
-	}
+	m_icon.Draw(d2dContext, m_iconLabellayout.iconRect);
 
 	// ==================================
 	// TEXT (LEFT ALIGNED)
@@ -125,15 +82,7 @@ bool UIIconLabel::Render()
 
 void UIIconLabel::OnStateChanged(UIElementState oldState, UIElementState newState)
 {
-	UIIconHelper::ApplyIconStateTargets(
-		newState,
-		m_iconStyle,
-		m_iconLoaded,
-		m_smoothIconColor,
-		m_smoothIconScale,
-		1.0f,
-		1.1f,
-		1.2f);
+	m_icon.ApplyState(newState, 1.0f, 1.1f, 1.2f);
 
 	UILabel::OnStateChanged(oldState, newState);
 }
@@ -150,32 +99,27 @@ void UIIconLabel::SetTextAreaWidth(float width)
 
 void UIIconLabel::SetIcon(const wchar_t* path)
 {
-	UIIconHelper::ResetIconPath(m_iconPath, path, m_icon, m_iconLoaded);
+	m_icon.SetPath(path);
 }
 
 void UIIconLabel::SetIconScale(float scale)
 {
-	m_iconScale = scale;
+	m_icon.SetScale(scale);
 }
 
 void UIIconLabel::SetIconStyle(const UIStyle& style)
 {
-	m_iconStyle = style;
+	m_icon.SetStyle(style);
 }
 
 UIStyle& UIIconLabel::GetIconStyle()
 {
-	return m_iconStyle;
+	return m_icon.Style();
 }
 
 const UIStyle& UIIconLabel::GetIconStyle() const
 {
-	return m_iconStyle;
-}
-
-void UIIconLabel::EnsureIconLoaded()
-{
-	UIIconHelper::EnsureIconLoaded(m_context, m_iconPath, m_icon, m_iconLoaded);
+	return m_icon.Style();
 }
 
 void UIIconLabel::UpdateTextLayout()

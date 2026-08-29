@@ -6,6 +6,9 @@
 #define D3D11_UI_FRAMEWORK_INTERFACE_API __declspec(dllimport)
 #endif
 
+// D2D1_COLOR_F 를 값으로 받으므로 전방선언만으로는 부족하다.
+#include <d2d1_3.h>
+
 struct ID2D1DeviceContext5;
 struct ID2D1SvgDocument;
 struct ID2D1SvgPaint;
