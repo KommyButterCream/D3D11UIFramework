@@ -87,9 +87,16 @@ bool UIContextMenuButton::Render()
 	}
 
 	// ==================================
-	// EXTRA TEXT (RIGHT)
+	// EXTRA TEXT (RIGHT)  또는  하위 메뉴 꺾쇠
 	// ==================================
-	if (m_extraTextLayout)
+	//
+	// 둘은 같은 자리를 쓴다. 하위 메뉴 항목에 단축키를 같이 다는 UI 는
+	// 없으므로 배타로 둔다.
+	if (m_hasSubMenu)
+	{
+		DrawSubMenuArrow(d2dContext, layout.extraRect);
+	}
+	else if (m_extraTextLayout)
 	{
 		m_textBrush->SetColor(m_smoothTextColor.GetColor());
 
@@ -101,6 +108,59 @@ bool UIContextMenuButton::Render()
 	}
 
 	return true;
+}
+
+void UIContextMenuButton::DrawSubMenuArrow(ID2D1DeviceContext* d2dContext,
+	const D2D1_RECT_F& extraRect) const
+{
+	if (!d2dContext || !m_textBrush)
+		return;
+
+	m_textBrush->SetColor(m_smoothTextColor.GetColor());
+
+	// extraRect 오른쪽 끝에 붙이고 세로는 가운데.
+	const float tipX = extraRect.right;
+	const float baseX = tipX - m_arrowHalfHeight;
+	const float centerY = (extraRect.top + extraRect.bottom) * 0.5f;
+
+	// 선 두 개로 '>' 를 만든다. 끝을 둥글게 이으면 꺾이는 지점이 깔끔하다.
+	d2dContext->DrawLine(
+		D2D1::Point2F(baseX, centerY - m_arrowHalfHeight),
+		D2D1::Point2F(tipX, centerY),
+		m_textBrush,
+		m_arrowThickness);
+
+	d2dContext->DrawLine(
+		D2D1::Point2F(tipX, centerY),
+		D2D1::Point2F(baseX, centerY + m_arrowHalfHeight),
+		m_textBrush,
+		m_arrowThickness);
+}
+
+void UIContextMenuButton::OnActivated()
+{
+	// 하위 메뉴를 여는 항목은 커맨드를 내지 않는다.
+	// 실제로 여는 것은 UIContextMenuPanel 이 클릭을 보고 처리한다.
+	if (m_hasSubMenu)
+		return;
+
+	UIButton::OnActivated();
+}
+
+void UIContextMenuButton::SetHasSubMenu(bool enable)
+{
+	if (m_hasSubMenu == enable)
+		return;
+
+	m_hasSubMenu = enable;
+
+	// 꺾쇠와 단축키 텍스트가 같은 자리를 쓰므로 레이아웃을 다시 잡는다.
+	m_isLayoutDirty = true;
+}
+
+bool UIContextMenuButton::HasSubMenu() const
+{
+	return m_hasSubMenu;
 }
 
 void UIContextMenuButton::OnClick()

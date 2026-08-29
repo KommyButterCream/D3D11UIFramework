@@ -17,6 +17,8 @@
 
 #include "../D3D11UIFramework/Panel/UIPanel.h"
 #include "../D3D11UIFramework/Button/UIButton.h"
+#include "../D3D11UIFramework/Panel/UIContextMenuPanel.h"
+#include "../D3D11UIFramework/Button/UIContextMenuButton.h"
 #include "../D3D11UIFramework/Event/UIEventDispatcher.h"
 
 namespace
@@ -317,6 +319,245 @@ static void TestLayout()
 	Expect(r1.left == 5.0f && r2.left == 5.0f, "좌측 padding 적용");
 }
 
+// ────────────────────────────────────────────────────────────────────
+// 하위 컨텍스트 메뉴
+// ────────────────────────────────────────────────────────────────────
+//
+//   루트 (0,0)-(200,90)
+//     ├ save   (0,0)-(200,30)   하위 메뉴 있음
+//     └ other  (0,40)-(200,70)  커맨드 ZoomOut
+//
+//   하위 (200,0)-(400,60)
+//     └ png    (200,0)-(400,30) 커맨드 Zoom1to1
+//
+// 렌더 컨텍스트가 없으므로 Show/ShowAsSubMenu 의 자동 배치 대신
+// 좌표를 직접 박아 넣는다(UILayoutType::None).
+struct SubMenuFixture
+{
+	UIContextMenuPanel root;
+	std::shared_ptr<UIContextMenuPanel> sub = std::make_shared<UIContextMenuPanel>();
+
+	std::shared_ptr<UIContextMenuButton> save = std::make_shared<UIContextMenuButton>();
+	std::shared_ptr<UIContextMenuButton> other = std::make_shared<UIContextMenuButton>();
+	std::shared_ptr<UIContextMenuButton> png = std::make_shared<UIContextMenuButton>();
+
+	UIEventDispatcher dispatcher;
+	CommandLog log;
+
+	SubMenuFixture()
+	{
+		dispatcher.RegisterCallback(&CommandLog::Callback, &log);
+
+		root.SetLayoutType(UILayoutType::None);
+		root.SetLayout({ 0.0f, 0.0f, 200.0f, 90.0f });
+
+		save->SetLayout({ 0.0f, 0.0f, 200.0f, 30.0f });
+		other->SetLayout({ 0.0f, 40.0f, 200.0f, 70.0f });
+		other->SetCommand(UICommand::ZoomOut);
+		other->SetEventDispatcher(&dispatcher);
+
+		root.AddChild(save);
+		root.AddChild(other);
+
+		sub->SetLayoutType(UILayoutType::None);
+		sub->SetLayout({ 200.0f, 0.0f, 400.0f, 60.0f });
+
+		png->SetLayout({ 200.0f, 0.0f, 400.0f, 30.0f });
+		png->SetCommand(UICommand::Zoom1to1);
+		png->SetEventDispatcher(&dispatcher);
+		sub->AddChild(png);
+
+		root.AttachSubMenu(save.get(), sub);
+		root.SetVisible(true);
+	}
+
+	// 마우스를 그 자리에 dt 초 동안 두었다고 알린다.
+	void Dwell(float x, float y, float seconds, float step = 0.05f)
+	{
+		root.OnMouseEvent(UIMouseEventType::Move, x, y);
+
+		for (float t = 0.0f; t < seconds; t += step)
+		{
+			root.Update(step);
+		}
+	}
+
+	void Click(float x, float y)
+	{
+		root.OnMouseEvent(UIMouseEventType::LButtonDown, x, y);
+		root.OnMouseEvent(UIMouseEventType::LButtonUp, x, y);
+	}
+};
+
+void TestSubMenuAttach()
+{
+	printf("\n[하위 메뉴 - 연결]\n");
+
+	SubMenuFixture f;
+
+	Expect(f.save->HasSubMenu(), "붙인 항목에 하위 메뉴 표시가 켜짐");
+	Expect(!f.other->HasSubMenu(), "안 붙인 항목은 그대로");
+	Expect(!f.sub->IsVisible(), "하위 메뉴는 닫힌 채로 시작");
+	Expect(!f.root.IsSubMenuOpen(), "처음엔 열린 하위 메뉴가 없음");
+}
+
+void TestSubMenuHoverOpen()
+{
+	printf("\n[하위 메뉴 - hover 로 열기]\n");
+
+	{
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.30f);
+		Expect(!f.root.IsSubMenuOpen(), "0.3초에는 아직 안 열림");
+	}
+
+	{
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.50f);
+		Expect(f.root.IsSubMenuOpen(), "0.5초 머무르면 열림");
+		Expect(f.sub->IsVisible(), "열린 하위 메뉴가 보임");
+	}
+
+	{
+		// ★ 대기 중에는 Update 가 true 를 돌려줘야 한다.
+		//   false 를 돌려주면 렌더 스레드가 잠들어 dt 가 끊기고
+		//   타이머가 영영 만료되지 않는다.
+		SubMenuFixture f;
+		f.root.OnMouseEvent(UIMouseEventType::Move, 100.0f, 15.0f);
+		Expect(f.root.Update(0.05f), "열림 대기 중 Update 가 true (프레임 유지)");
+	}
+
+	{
+		SubMenuFixture f;
+		f.Dwell(100.0f, 55.0f, 0.60f);   // 하위 메뉴 없는 항목
+		Expect(!f.root.IsSubMenuOpen(), "하위 메뉴 없는 항목은 안 열림");
+	}
+}
+
+void TestSubMenuClickOpen()
+{
+	printf("\n[하위 메뉴 - 클릭으로 열기]\n");
+
+	SubMenuFixture f;
+	f.root.OnMouseEvent(UIMouseEventType::Move, 100.0f, 15.0f);
+	f.Click(100.0f, 15.0f);
+
+	Expect(f.root.IsSubMenuOpen(), "클릭하면 타이머 없이 즉시 열림");
+	Expect(f.log.Count() == 0, "하위 메뉴 항목은 커맨드를 내지 않음");
+
+	// 두 번째 클릭은 열린 채로 둔다(윈도우 탐색기와 같은 동작).
+	f.Click(100.0f, 15.0f);
+	Expect(f.root.IsSubMenuOpen(), "다시 눌러도 열린 채 유지");
+}
+
+void TestSubMenuRouting()
+{
+	printf("\n[하위 메뉴 - 이벤트 라우팅]\n");
+
+	SubMenuFixture f;
+	f.Dwell(100.0f, 15.0f, 0.50f);
+
+	// 하위 메뉴 안의 좌표(300,15)는 루트 사각형(0..200) **밖**이다.
+	const bool consumed = f.root.OnMouseEvent(UIMouseEventType::Move, 300.0f, 15.0f);
+	Expect(consumed, "루트 밖이지만 하위 메뉴 좌표라 소비됨");
+	Expect(f.png->GetState() == UIElementState::Hovered, "하위 메뉴 항목에 hover 전달");
+	Expect(f.root.IsSubMenuOpen(), "하위 메뉴로 옮겨도 닫히지 않음");
+}
+
+void TestSubMenuCloseDelay()
+{
+	printf("\n[하위 메뉴 - 닫힘 유예]\n");
+
+	{
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.50f);
+
+		f.root.OnMouseEvent(UIMouseEventType::Move, 100.0f, 55.0f);
+		f.root.Update(0.10f);
+		Expect(f.root.IsSubMenuOpen(), "다른 항목으로 옮겨도 0.1초는 버팀");
+
+		f.root.Update(0.30f);
+		Expect(!f.root.IsSubMenuOpen(), "유예가 지나면 닫힘");
+	}
+
+	{
+		// 대각선 이동 구제: 아래 항목을 스치고 하위 메뉴로 들어가면 살아남는다.
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.50f);
+
+		f.root.OnMouseEvent(UIMouseEventType::Move, 100.0f, 55.0f);  // 스침
+		f.root.Update(0.10f);
+		f.root.OnMouseEvent(UIMouseEventType::Move, 300.0f, 15.0f);  // 도착
+		f.root.Update(0.30f);
+
+		Expect(f.root.IsSubMenuOpen(), "유예 중 하위 메뉴 진입 시 닫힘 취소");
+	}
+}
+
+void TestSubMenuLeafClick()
+{
+	printf("\n[하위 메뉴 - 잎 항목 선택]\n");
+
+	SubMenuFixture f;
+	f.Dwell(100.0f, 15.0f, 0.50f);
+	f.root.OnMouseEvent(UIMouseEventType::Move, 300.0f, 15.0f);
+
+	f.Click(300.0f, 15.0f);
+
+	Expect(f.log.Count() == 1 && f.log.Last() == UICommand::Zoom1to1,
+		"하위 메뉴 잎 항목이 커맨드를 냄");
+	Expect(!f.sub->IsVisible(), "고르면 하위 메뉴가 닫힘");
+	Expect(!f.root.IsVisible(), "체인 전체(루트까지) 닫힘");
+}
+
+void TestSubMenuRootClickKeepsOpen()
+{
+	printf("\n[하위 메뉴 - 루트 항목은 기존 동작 유지]\n");
+
+	SubMenuFixture f;
+	f.root.OnMouseEvent(UIMouseEventType::Move, 100.0f, 55.0f);
+	f.Click(100.0f, 55.0f);
+
+	Expect(f.log.Count() == 1 && f.log.Last() == UICommand::ZoomOut,
+		"루트 잎 항목이 커맨드를 냄");
+	Expect(f.root.IsVisible(),
+		"루트 항목을 눌러도 메뉴는 열린 채 (Zoom In 연타 사용 방식)");
+}
+
+void TestSubMenuHideChain()
+{
+	printf("\n[하위 메뉴 - 체인 닫기]\n");
+
+	{
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.50f);
+		f.root.Hide();
+
+		Expect(!f.root.IsSubMenuOpen(), "Hide 가 하위 메뉴도 닫음");
+		Expect(!f.sub->IsVisible(), "하위 메뉴가 실제로 숨겨짐");
+	}
+
+	{
+		// 메뉴 밖 클릭
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.50f);
+
+		f.root.OnMouseEvent(UIMouseEventType::LButtonDown, 600.0f, 600.0f);
+		Expect(!f.root.IsVisible(), "메뉴 밖 클릭으로 닫힘");
+		Expect(!f.sub->IsVisible(), "하위 메뉴도 같이 닫힘");
+	}
+
+	{
+		// 우클릭으로 다시 열면 체인이 리셋된다.
+		// (Show 는 컨텍스트가 없어도 배치만 못 할 뿐 동작한다)
+		SubMenuFixture f;
+		f.Dwell(100.0f, 15.0f, 0.50f);
+
+		f.root.OnMouseEvent(UIMouseEventType::RButtonUp, 10.0f, 10.0f);
+		Expect(!f.root.IsSubMenuOpen(), "우클릭으로 새로 열면 체인 리셋");
+	}
+}
+
 int main()
 {
 	printf("D3D11UIFramework 회귀 하네스 (렌더 컨텍스트 없음)\n");
@@ -329,6 +570,15 @@ int main()
 	TestVisibility();
 	TestNestedPanel();
 	TestLayout();
+
+	TestSubMenuAttach();
+	TestSubMenuHoverOpen();
+	TestSubMenuClickOpen();
+	TestSubMenuRouting();
+	TestSubMenuCloseDelay();
+	TestSubMenuLeafClick();
+	TestSubMenuRootClickKeepsOpen();
+	TestSubMenuHideChain();
 
 	printf("\n================================================\n");
 	printf("%s  (%d/%d)\n",

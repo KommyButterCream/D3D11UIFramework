@@ -78,13 +78,15 @@ protected:
 	void NotifyChildrenLeave(float x, float y);
 	void NotifyChildLayoutChanged(UIElementBase* child);
 
+	// 파생 패널이 "이 좌표가 어느 항목 위인가" 를 직접 물어야 할 때가 있다.
+	// (컨텍스트 메뉴가 하위 메뉴를 열 항목을 찾을 때)
+	UIElementBase* HitTestRecursive(float x, float y);
 
 private:
 	bool InitializeChildren(IRenderContext* context);
 	void ShutdownChildren();
 	void DiscardChildDeviceResources();
 	bool RestoreChildDeviceResources(IRenderContext* context);
-	UIElementBase* HitTestRecursive(float x, float y);
 	void UpdateVerticalLayout();
 	void UpdateHorizontalLayout();
 
