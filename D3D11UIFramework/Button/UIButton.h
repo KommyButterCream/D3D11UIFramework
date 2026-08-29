@@ -41,7 +41,13 @@ enum class UICommand
 	LutInverted,
 	LutHot,
 	LutViridis,
-	LutJet
+	LutJet,
+
+	// 고배율에서 픽셀 격자와 값을 표시. 토글이다.
+	TogglePixelGrid,
+
+	// 세 점으로 각도 측정. 토글이다.
+	MeasureAngle
 };
 
 class D3D11_UI_FRAMEWORK_INTERFACE_API UIButton : public UILabel

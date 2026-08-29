@@ -230,6 +230,41 @@ void UIIconRenderer::DrawShape(ID2D1RenderTarget* target, UIIconShape shape, flo
 		break;
 	}
 
+	case UIIconShape::MeasureAngle:
+	{
+		// 꼭짓점에서 뻗은 두 변 + 사이의 호.
+		target->DrawLine(P(0.14f, 0.84f), P(0.90f, 0.84f), brush, stroke, style);
+		target->DrawLine(P(0.14f, 0.84f), P(0.76f, 0.22f), brush, stroke, style);
+
+		// 각을 나타내는 호. 꼭짓점 중심의 원에서 1/8 조각만 그린다.
+		const D2D1_ELLIPSE arc = D2D1::Ellipse(P(0.14f, 0.84f), 0.34f, 0.34f);
+		target->PushAxisAlignedClip(
+			D2D1::RectF(0.30f, 0.50f, 0.52f, 0.86f),
+			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		target->DrawEllipse(arc, brush, stroke * 0.8f, style);
+		target->PopAxisAlignedClip();
+		break;
+	}
+
+	case UIIconShape::PixelGrid:
+	{
+		// 3x3 격자. 가운데 칸만 채워서 "픽셀 하나를 본다" 를 나타낸다.
+		const float a = 0.12f;
+		const float b = 0.88f;
+		const float s = (b - a) / 3.0f;
+
+		target->FillRectangle(
+			D2D1::RectF(a + s, a + s, a + s * 2.0f, a + s * 2.0f), brush);
+
+		for (int i = 0; i <= 3; ++i)
+		{
+			const float t = a + s * static_cast<float>(i);
+			target->DrawLine(P(t, a), P(t, b), brush, stroke * 0.75f, style);
+			target->DrawLine(P(a, t), P(b, t), brush, stroke * 0.75f, style);
+		}
+		break;
+	}
+
 	case UIIconShape::Lut:
 	{
 		// 반쯤 채운 원 — 대비 조절의 관용적 표기.

@@ -18,7 +18,9 @@ enum class UIIconShape
 	ZoomOneToOne,   // 모서리가 안쪽을 향한다 — 실제 크기
 	ZoomFit,        // 모서리가 바깥을 향한다 — 맞춤
 	MeasureDistance,
+	MeasureAngle,
 	Lut,
+	PixelGrid,
 
 	// 컨텍스트 메뉴
 	Check,
