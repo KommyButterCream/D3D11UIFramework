@@ -27,6 +27,7 @@
     <ClCompile Include="Panel\UIPanel.cpp" />
     <ClCompile Include="Panel\UIStatusPanel.cpp" />
     <ClCompile Include="Splitbar\UISplitBar.cpp" />
+    <ClCompile Include="Slider\UISlider.cpp" />
     <ClCompile Include="Base\UIElementBase.cpp" />
     <ClCompile Include="Event\UIEventDispatcher.cpp" />
     <ClCompile Include="Resource\UIIcon.cpp" />
@@ -52,6 +53,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource\ColorRGBA8.h" />
     <ClInclude Include="Splitbar\UISplitBar.h" />
+    <ClInclude Include="Slider\UISlider.h" />
     <ClInclude Include="Base\UIElementBase.h" />
     <ClInclude Include="Event\UIEventDispatcher.h" />
     <ClInclude Include="Event\UIEventResult.h" />

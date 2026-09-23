@@ -25,6 +25,9 @@
     <Filter Include="Splitbar">
       <UniqueIdentifier>{d364fc65-246e-4024-8d20-36ac7b7b42be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Slider">
+      <UniqueIdentifier>{7a1c9e42-5b83-4f17-9d06-2c4e8b5a91d3}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Base">
       <UniqueIdentifier>{b270a8bf-abbc-4d2a-bc11-65b701ba9586}</UniqueIdentifier>
     </Filter>
@@ -65,6 +68,9 @@
     </ClCompile>
     <ClCompile Include="Splitbar\UISplitBar.cpp">
       <Filter>Splitbar</Filter>
+    </ClCompile>
+    <ClCompile Include="Slider\UISlider.cpp">
+      <Filter>Slider</Filter>
     </ClCompile>
     <ClCompile Include="Base\UIElementBase.cpp">
       <Filter>Base</Filter>
@@ -109,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="Splitbar\UISplitBar.h">
       <Filter>Splitbar</Filter>
+    </ClInclude>
+    <ClInclude Include="Slider\UISlider.h">
+      <Filter>Slider</Filter>
     </ClInclude>
     <ClInclude Include="Base\UIElementBase.h">
       <Filter>Base</Filter>
