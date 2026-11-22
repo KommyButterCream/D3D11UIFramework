@@ -1,0 +1,19 @@
+.vs/
+Debug/
+Release/
+x64/
+x86/
+bin/
+obj/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.bak
+
+# 검증 하네스 (로컬 전용, 커밋하지 않는다)
+/tools/
+
+# 셰이더 컴파일 산출물
+# FxCompile 이 $(SolutionDir)Shaders\ 로 떨어뜨린다. 빌드 구성마다 내용이 바뀐다.
+*.cso
